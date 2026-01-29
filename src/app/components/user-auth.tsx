@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, Lock, User, ArrowRight, ArrowLeft, KeyRound } from 'lucide-react';
-import { sendLoginOTP, sendSignupOTP, verifyOTP, signUpUser } from '../../lib/supabase';
+import { sendLoginOTP, verifyOTP, signUpUser, resendSignupOTP } from '../../lib/supabase';
 import { useAppStore } from '../store/app-store';
 
 interface UserAuthProps {
@@ -120,11 +120,16 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
           return;
         }
 
-        // First create the account with password
-        await signUpUser(formData.email, formData.password, formData.name);
+        // Create the account with password - Supabase will send confirmation OTP automatically
+        const { user } = await signUpUser(formData.email, formData.password, formData.name);
         
-        // Then send OTP for verification
-        await sendSignupOTP(formData.email);
+        if (user?.identities?.length === 0) {
+          // User already exists
+          setError('Email already registered. Please login instead.');
+          setLoading(false);
+          return;
+        }
+        
         setCooldown(60); // Start 60 second cooldown
         setMessage(`Verification code sent to ${formData.email}`);
         setStep('otp');
@@ -203,7 +208,8 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
       if (isLogin) {
         await sendLoginOTP(formData.email);
       } else {
-        await sendSignupOTP(formData.email);
+        // Use resend for signup confirmation
+        await resendSignupOTP(formData.email);
       }
       setCooldown(60); // Start 60 second cooldown
       setMessage('New code sent to your email');

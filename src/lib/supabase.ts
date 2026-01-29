@@ -106,7 +106,9 @@ export async function signUpUser(email: string, password: string, name: string) 
     options: {
       data: {
         name
-      }
+      },
+      // Email confirmation is handled by Supabase automatically
+      // The user will receive an OTP via email
     }
   });
 
@@ -134,6 +136,17 @@ export async function sendSignupOTP(email: string) {
     options: {
       shouldCreateUser: true // Create user if doesn't exist
     }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Resend signup confirmation email
+export async function resendSignupOTP(email: string) {
+  const { data, error } = await supabase.auth.resend({
+    type: 'signup',
+    email
   });
 
   if (error) throw error;
