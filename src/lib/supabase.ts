@@ -114,6 +114,44 @@ export async function signUpUser(email: string, password: string, name: string) 
   return data;
 }
 
+// Send OTP for login (passwordless)
+export async function sendLoginOTP(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false // Don't create user if doesn't exist
+    }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Send OTP for signup verification
+export async function sendSignupOTP(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true // Create user if doesn't exist
+    }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+// Verify OTP code
+export async function verifyOTP(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email'
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 export async function signInUser(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
