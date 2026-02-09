@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   ShoppingCart, 
@@ -53,7 +53,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
     updateOrderStatus, 
     addProduct, updateProduct, deleteProduct,
     addUser, updateUser, deleteUser,
-    deleteOrder, deleteFitProfile
+    deleteOrder, deleteFitProfile, getFitProfiles
   } = useAppStore();
   
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -74,6 +74,13 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [userForm, setUserForm] = useState({
     name: '', email: '', phone: '', street: '', city: '', postcode: '', country: 'United Kingdom'
   });
+
+  // Fetch fit profiles when tab is active
+  useEffect(() => {
+    if (activeTab === 'fit-profiles') {
+      getFitProfiles();
+    }
+  }, [activeTab, getFitProfiles]);
 
   // Statistics calculations
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
@@ -641,45 +648,65 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
               <h2 className="font-[var(--font-serif)] text-[18px] text-[var(--charcoal)]">Fit Profiles ({fitProfiles.length})</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-[14px]">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">User</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Height</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Weight</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Chest</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Waist</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Hips</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Preferred Fit</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Notes</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {fitProfiles.map((profile) => {
-                    const user = getUserById(profile.userId);
-                    return (
-                      <tr key={profile.userId} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[var(--crimson)] flex items-center justify-center text-white text-[14px] font-medium">
-                              {user?.name.split(' ').map(n => n[0]).join('') || '?'}
+                  {fitProfiles.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
+                        No fit profiles yet. Users can create their profiles to help find the perfect fit.
+                      </td>
+                    </tr>
+                  ) : (
+                    fitProfiles.map((profile: any) => {
+                      const user = getUserById(profile.userId);
+                      return (
+                        <tr key={profile.userId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[var(--crimson)] flex items-center justify-center text-white text-[14px] font-medium">
+                                {user?.name.split(' ').map((n: string) => n[0]).join('') || '?'}
+                              </div>
+                              <div>
+                                <p className="text-[14px] font-medium">{user?.name || 'Unknown'}</p>
+                                <p className="text-[12px] text-gray-500">{user?.email}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-[14px] font-medium">{user?.name || 'Unknown'}</p>
-                              <p className="text-[12px] text-gray-500">{user?.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-[14px] text-gray-600">{profile.height}</td>
-                        <td className="px-6 py-4 text-[14px] text-gray-600">{profile.weight}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 text-[12px] font-medium rounded bg-gray-100 capitalize">{profile.preferredFit}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button onClick={() => handleDeleteFitProfile(profile.userId)} className="p-2 text-gray-400 hover:text-red-600" title="Delete">
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">{profile.height || '-'} cm</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.weight || '-'} kg</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.chest || '-'} cm</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.waist || '-'} cm</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.hips || '-'} cm</td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 text-[12px] font-medium rounded bg-gray-100 capitalize">{profile.preferredFit}</span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{profile.notes || '-'}</td>
+                          <td className="px-6 py-4">
+                            <button 
+                              onClick={() => handleDeleteFitProfile(profile.userId)} 
+                              className="p-2 text-gray-400 hover:text-red-600 transition-colors" 
+                              title="Delete profile"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

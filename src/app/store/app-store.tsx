@@ -60,6 +60,7 @@ export interface FitProfile {
   waist: string;
   hips: string;
   preferredFit: 'slim' | 'regular' | 'relaxed';
+  notes?: string;
   createdAt: string;
 }
 
@@ -83,6 +84,11 @@ interface AppContextType extends AppState {
   setIsAdmin: (isAdmin: boolean) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   saveFitProfile: (profile: Omit<FitProfile, 'userId' | 'createdAt'>) => void;
+  // Fit Profile operations
+  getFitProfiles: () => Promise<void>;
+  addFitProfile: (profile: Omit<FitProfile, 'createdAt'>) => Promise<void>;
+  updateFitProfile: (userId: string, profile: Partial<Omit<FitProfile, 'userId' | 'createdAt'>>) => Promise<void>;
+  deleteFitProfile: (userId: string) => Promise<void>;
   // User authentication
   loginUser: (email: string, password: string) => Promise<boolean>;
   registerUser: (name: string, email: string, password: string) => Promise<boolean>;
@@ -95,7 +101,6 @@ interface AppContextType extends AppState {
   updateUser: (id: string, user: Partial<User>) => void;
   deleteUser: (id: string) => void;
   deleteOrder: (id: string) => void;
-  deleteFitProfile: (userId: string) => void;
 }
 
 // Mock data
@@ -587,9 +592,126 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOrders(prev => prev.filter(order => order.id !== id));
   };
 
+  // Fit Profile Operations
+  const getFitProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fit_profiles')
+        .select('*, users(name, email)');
+
+      if (error) {
+        console.error('Error fetching fit profiles:', error);
+        return;
+      }
+
+      if (data) {
+        const profiles = data.map((p: any) => ({
+          id: p.id,
+          userId: p.user_id,
+          height: p.height,
+          weight: p.weight,
+          chest: p.chest,
+          waist: p.waist,
+          hips: p.hips,
+          preferredFit: p.preferred_fit,
+          notes: p.notes,
+          userName: p.users?.name,
+          userEmail: p.users?.email,
+          createdAt: p.created_at,
+          updatedAt: p.updated_at
+        }));
+        setFitProfiles(profiles as any);
+      }
+    } catch (err) {
+      console.error('Failed to fetch fit profiles:', err);
+    }
+  };
+
+  const addFitProfile = async (profile: Omit<FitProfile, 'createdAt'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('fit_profiles')
+        .insert([
+          {
+            user_id: profile.userId,
+            height: profile.height,
+            weight: profile.weight,
+            chest: profile.chest,
+            waist: profile.waist,
+            hips: profile.hips,
+            preferred_fit: profile.preferredFit,
+            notes: profile.notes || ''
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error adding fit profile:', error);
+      } else if (data && data.length > 0) {
+        const newProfile: FitProfile = {
+          userId: data[0].user_id,
+          height: data[0].height,
+          weight: data[0].weight,
+          chest: data[0].chest,
+          waist: data[0].waist,
+          hips: data[0].hips,
+          preferredFit: data[0].preferred_fit,
+          createdAt: data[0].created_at
+        };
+        setFitProfiles(prev => [...prev, newProfile]);
+        await getFitProfiles();
+      }
+    } catch (err) {
+      console.error('Failed to add fit profile:', err);
+    }
+  };
+
+  const updateFitProfile = async (userId: string, profile: Partial<Omit<FitProfile, 'userId' | 'createdAt'>>) => {
+    try {
+      const { error } = await supabase
+        .from('fit_profiles')
+        .update({
+          height: profile.height,
+          weight: profile.weight,
+          chest: profile.chest,
+          waist: profile.waist,
+          hips: profile.hips,
+          preferred_fit: profile.preferredFit,
+          notes: profile.notes || ''
+        })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error updating fit profile:', error);
+      } else {
+        setFitProfiles(prev =>
+          prev.map(p =>
+            p.userId === userId ? { ...p, ...profile } : p
+          )
+        );
+        await getFitProfiles();
+      }
+    } catch (err) {
+      console.error('Failed to update fit profile:', err);
+    }
+  };
+
   // Admin Delete Operations for Fit Profiles
-  const deleteFitProfile = (userId: string) => {
-    setFitProfiles(prev => prev.filter(profile => profile.userId !== userId));
+  const deleteFitProfile = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('fit_profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error deleting fit profile:', error);
+      } else {
+        setFitProfiles(prev => prev.filter(profile => profile.userId !== userId));
+      }
+    } catch (err) {
+      console.error('Failed to delete fit profile:', err);
+    }
   };
 
   return (
@@ -611,6 +733,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAdmin,
         updateOrderStatus,
         saveFitProfile,
+        // Fit Profile operations
+        getFitProfiles,
+        addFitProfile,
+        updateFitProfile,
+        deleteFitProfile,
         // User authentication
         loginUser,
         registerUser,
@@ -622,8 +749,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addUser,
         updateUser,
         deleteUser,
-        deleteOrder,
-        deleteFitProfile
+        deleteOrder
       }}
     >
       {children}
