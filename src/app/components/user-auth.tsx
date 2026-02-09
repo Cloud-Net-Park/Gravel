@@ -68,6 +68,24 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
         return;
       }
 
+      if (data.user) {
+        // Store new user in Supabase users table
+        try {
+          await supabase
+            .from('users')
+            .upsert([
+              {
+                id: data.user.id,
+                email: formData.email,
+                name: formData.name,
+                joined_date: new Date().toISOString()
+              }
+            ], { onConflict: 'id' });
+        } catch (dbErr) {
+          console.error('Error storing user in database:', dbErr);
+        }
+      }
+
       // Account created - show success and prompt to login
       setStep('signup-success');
     } catch (err: any) {
@@ -106,12 +124,30 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
       if (signInError) throw signInError;
 
       if (data.user) {
-        setCurrentUser({
+        const newUser = {
           id: data.user.id,
           email: data.user.email || formData.email,
           name: data.user.user_metadata?.name || formData.name || 'User',
           joinedDate: new Date().toISOString().split('T')[0]
-        });
+        };
+        
+        // Store user login in Supabase users table
+        try {
+          await supabase
+            .from('users')
+            .upsert([
+              {
+                id: data.user.id,
+                email: newUser.email,
+                name: newUser.name,
+                joined_date: newUser.joinedDate
+              }
+            ], { onConflict: 'id' });
+        } catch (dbErr) {
+          console.error('Error storing user in database:', dbErr);
+        }
+        
+        setCurrentUser(newUser);
         onSuccess();
       } else {
         setError('Login failed. Please try again.');

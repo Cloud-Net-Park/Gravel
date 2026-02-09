@@ -171,8 +171,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Fetch products from Supabase on mount
   useEffect(() => {
     fetchProductsFromSupabase();
+    fetchUsersFromSupabase();
     // Set up auto-refresh every 3 seconds to catch admin changes immediately
-    const interval = setInterval(fetchProductsFromSupabase, 3000);
+    const interval = setInterval(() => {
+      fetchProductsFromSupabase();
+      fetchUsersFromSupabase();
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -211,6 +215,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Failed to fetch products:', err);
       // Keep mock products as fallback
       setProducts(mockProducts);
+    }
+  };
+
+  const fetchUsersFromSupabase = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('joined_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users from Supabase:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Convert Supabase users to app format
+        const supabaseUsers = data.map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          phone: u.phone,
+          joinedDate: u.joined_date
+        }));
+        
+        setUsers(supabaseUsers);
+      }
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
     }
   };
 
