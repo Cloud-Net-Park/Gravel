@@ -302,7 +302,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                   <span className="text-[13px] text-gray-500 uppercase tracking-wide">Total Revenue</span>
                   <BarChart3 size={20} className="text-[var(--crimson)]" />
                 </div>
-                <p className="font-[var(--font-serif)] text-3xl text-[var(--charcoal)]">£{totalRevenue.toLocaleString()}</p>
+                <p className="font-[var(--font-serif)] text-3xl text-[var(--charcoal)]">₹{totalRevenue.toLocaleString()}</p>
               </div>
               <div className="bg-white p-6 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -691,7 +691,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[14px] text-[var(--charcoal)] mb-2">Price (£) *</label>
+              <label className="block text-[14px] text-[var(--charcoal)] mb-2">Price (₹) *</label>
               <input
                 type="number"
                 value={productForm.price}

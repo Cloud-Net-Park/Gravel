@@ -106,7 +106,7 @@ export function CartCheckout({ onContinueShopping }: CartCheckoutProps) {
                         </button>
                       </div>
                       <p className="text-[17px] text-[var(--crimson)]">
-                        £{(item.price * item.quantity).toFixed(2)}
+                        ₹{(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -126,17 +126,17 @@ export function CartCheckout({ onContinueShopping }: CartCheckoutProps) {
             <div className="space-y-4 mb-6 pb-6 border-b border-[var(--border)]">
               <div className="flex justify-between text-[14px]">
                 <span className="text-[var(--charcoal)]">Subtotal</span>
-                <span className="text-[var(--charcoal)]">£{subtotal.toFixed(2)}</span>
+                <span className="text-[var(--charcoal)]">₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[14px]">
                 <span className="text-[var(--charcoal)]">Shipping</span>
                 <span className="text-[var(--charcoal)]">
-                  {shipping === 0 ? 'Free' : `£${shipping.toFixed(2)}`}
+                  {shipping === 0 ? 'Free' : `₹${shipping.toFixed(2)}`}
                 </span>
               </div>
               {shipping > 0 && (
                 <p className="text-[12px] text-[var(--light-gray)]">
-                  Add £{(200 - subtotal).toFixed(2)} more for free delivery
+                  Add ₹{(200 - subtotal).toFixed(2)} more for free delivery
                 </p>
               )}
             </div>
@@ -146,7 +146,7 @@ export function CartCheckout({ onContinueShopping }: CartCheckoutProps) {
                 Total
               </span>
               <span className="font-[var(--font-serif)] text-[20px] text-[var(--crimson)]">
-                £{total.toFixed(2)}
+                ₹{total.toFixed(2)}
               </span>
             </div>
 

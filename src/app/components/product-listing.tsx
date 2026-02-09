@@ -56,7 +56,7 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
     fabric: ['Cotton', 'Wool', 'Linen', 'Cashmere', 'Silk'],
     fit: ['Slim Fit', 'Regular Fit', 'Relaxed Fit'],
     size: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-    price: ['Under £200', '£200-£400', '£400-£600', 'Over £600']
+    price: ['Under ₹200', '₹200-₹400', '₹400-₹600', 'Over ₹600']
   };
 
   const toggleFilter = (filterType: keyof typeof selectedFilters, value: string) => {
@@ -101,10 +101,10 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
     // Price filter
     if (selectedFilters.price.length > 0) {
       const matchesPrice = selectedFilters.price.some(priceRange => {
-        if (priceRange === 'Under £200') return product.price < 200;
-        if (priceRange === '£200-£400') return product.price >= 200 && product.price <= 400;
-        if (priceRange === '£400-£600') return product.price > 400 && product.price <= 600;
-        if (priceRange === 'Over £600') return product.price > 600;
+        if (priceRange === 'Under ₹200') return product.price < 200;
+        if (priceRange === '₹200-₹400') return product.price >= 200 && product.price <= 400;
+        if (priceRange === '₹400-₹600') return product.price > 400 && product.price <= 600;
+        if (priceRange === 'Over ₹600') return product.price > 600;
         return false;
       });
       if (!matchesPrice) return false;

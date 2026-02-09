@@ -74,7 +74,7 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
               {product.name}
             </h1>
             <p className="text-[24px] text-[var(--crimson)]">
-              £{product.price.toFixed(2)}
+              ₹{product.price.toFixed(2)}
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
             <div className="flex flex-col items-center text-center">
               <TruckIcon size={24} strokeWidth={1.5} className="text-[var(--crimson)] mb-2" />
               <p className="text-[13px] text-[var(--charcoal)]">Free Delivery</p>
-              <p className="text-[11px] text-[var(--light-gray)]">Orders over £200</p>
+              <p className="text-[11px] text-[var(--light-gray)]">Orders over ₹200</p>
             </div>
             <div className="flex flex-col items-center text-center">
               <RotateCcw size={24} strokeWidth={1.5} className="text-[var(--crimson)] mb-2" />

@@ -39,7 +39,7 @@ export function ProductCard({ id, name, price, image, fabric, fit }: ProductCard
           </p>
         )}
         <p className="text-[15px] text-[var(--crimson)] mt-2">
-          £{price.toFixed(2)}
+          ₹{price.toFixed(2)}
         </p>
       </div>
     </div>
