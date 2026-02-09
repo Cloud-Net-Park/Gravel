@@ -11,6 +11,9 @@ export interface Product {
   fit: string;
   category?: string;
   size?: string[];
+  gender?: string;
+  isEssential?: boolean;
+  offerPercentage?: number;
 }
 
 export interface CartItem extends Product {
@@ -202,7 +205,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           fabric: p.fabric,
           fit: p.fit,
           category: p.category,
-          size: p.sizes
+          size: p.sizes,
+          gender: p.gender,
+          isEssential: p.is_essential,
+          offerPercentage: p.offer_percentage
         }));
         
         // Use ONLY Supabase products, don't mix with mock products
@@ -424,6 +430,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             fit: product.fit,
             category: product.category,
             sizes: product.size || [],
+            gender: product.gender,
+            is_essential: product.isEssential || false,
+            offer_percentage: product.offerPercentage || 0,
             is_active: true
           }
         ])
@@ -447,6 +456,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           fit: data[0].fit,
           category: data[0].category,
           size: data[0].sizes,
+          gender: data[0].gender,
+          isEssential: data[0].is_essential,
+          offerPercentage: data[0].offer_percentage,
           id: data[0].id
         };
         setProducts(prev => [...prev, newProduct]);

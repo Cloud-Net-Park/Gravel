@@ -69,7 +69,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   
   // Form states
   const [productForm, setProductForm] = useState({
-    name: '', price: '', image: '', fabric: '', fit: '', category: '', size: ''
+    name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, offerPercentage: ''
   });
   const [userForm, setUserForm] = useState({
     name: '', email: '', phone: '', street: '', city: '', postcode: '', country: 'United Kingdom'
@@ -125,7 +125,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   // Product CRUD handlers
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setProductForm({ name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '' });
+    setProductForm({ name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, offerPercentage: '' });
     setShowProductModal(true);
   };
 
@@ -138,7 +138,10 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
       fabric: product.fabric,
       fit: product.fit,
       category: product.category || '',
-      size: product.size?.join(', ') || ''
+      size: product.size?.join(', ') || '',
+      gender: product.gender || '',
+      isEssential: product.isEssential || false,
+      offerPercentage: String(product.offerPercentage || '')
     });
     setShowProductModal(true);
   };
@@ -151,7 +154,10 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
       fabric: productForm.fabric,
       fit: productForm.fit,
       category: productForm.category,
-      size: productForm.size.split(',').map(s => s.trim()).filter(Boolean)
+      size: productForm.size.split(',').map(s => s.trim()).filter(Boolean),
+      gender: productForm.gender,
+      isEssential: productForm.isEssential,
+      offerPercentage: Number(productForm.offerPercentage) || 0
     };
 
     if (editingProduct) {
@@ -584,10 +590,12 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                   <tr>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Product</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Category</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Gender</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Fabric</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Fit</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Price</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Sizes</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Offer %</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Essential</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
@@ -601,10 +609,12 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[14px] text-gray-600">{product.category || '-'}</td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.gender || '-'}</td>
                       <td className="px-6 py-4 text-[14px] text-gray-600">{product.fabric}</td>
                       <td className="px-6 py-4 text-[14px] text-gray-600">{product.fit}</td>
-                      <td className="px-6 py-4 text-[14px] text-[var(--crimson)] font-medium">£{product.price}</td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.size?.join(', ') || '-'}</td>
+                      <td className="px-6 py-4 text-[14px] text-[var(--crimson)] font-medium">₹{product.price}</td>
+                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.offerPercentage ? `${product.offerPercentage}%` : '-'}</td>
+                      <td className="px-6 py-4 text-[14px]">{product.isEssential ? '✓' : '-'}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1">
                           <button onClick={() => handleEditProduct(product)} className="p-2 text-gray-400 hover:text-green-600" title="Edit">
@@ -764,6 +774,43 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
               onChange={(e) => setProductForm({ ...productForm, size: e.target.value })}
               className="w-full h-10 px-3 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--crimson)]"
               placeholder="S, M, L, XL"
+            />
+          </div>
+          <div>
+            <label className="block text-[14px] text-[var(--charcoal)] mb-2">Gender</label>
+            <select
+              value={productForm.gender}
+              onChange={(e) => setProductForm({ ...productForm, gender: e.target.value })}
+              className="w-full h-10 px-3 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--crimson)]"
+            >
+              <option value="">Select gender</option>
+              <option value="Men">Men</option>
+              <option value="Women">Women</option>
+              <option value="Unisex">Unisex</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isEssential"
+              checked={productForm.isEssential}
+              onChange={(e) => setProductForm({ ...productForm, isEssential: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="isEssential" className="text-[14px] text-[var(--charcoal)] cursor-pointer">
+              Mark as Essential
+            </label>
+          </div>
+          <div>
+            <label className="block text-[14px] text-[var(--charcoal)] mb-2">Offer Percentage (%)</label>
+            <input
+              type="number"
+              value={productForm.offerPercentage}
+              onChange={(e) => setProductForm({ ...productForm, offerPercentage: e.target.value })}
+              className="w-full h-10 px-3 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--crimson)]"
+              placeholder="0"
+              min="0"
+              max="100"
             />
           </div>
           <div className="flex gap-3 pt-4">

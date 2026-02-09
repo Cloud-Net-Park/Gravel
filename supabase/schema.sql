@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS products (
   category TEXT,
   sizes TEXT[] DEFAULT ARRAY[]::TEXT[],
   sku TEXT UNIQUE,
+  gender TEXT,
+  is_essential BOOLEAN DEFAULT FALSE,
+  offer_percentage DECIMAL(5, 2) DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
