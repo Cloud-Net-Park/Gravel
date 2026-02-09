@@ -14,6 +14,9 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
   const product = {
     name: 'Tailored Wool Blazer',
     price: 495,
+    gender: 'Men',
+    isEssential: false,
+    offerPercentage: 0,
     images: [
       'https://images.unsplash.com/photo-1762417421091-1b4e24facc62?w=1080',
       'https://images.unsplash.com/photo-1719518411339-5158cea86caf?w=1080',
@@ -70,12 +73,33 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
         <div className="bg-[var(--cream)] p-8 lg:p-12">
           {/* Title & Price */}
           <div className="mb-8">
-            <h1 className="font-[var(--font-serif)] text-4xl mb-4 text-[var(--charcoal)]">
-              {product.name}
-            </h1>
-            <p className="text-[24px] text-[var(--crimson)]">
-              ₹{product.price.toFixed(2)}
-            </p>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h1 className="font-[var(--font-serif)] text-4xl text-[var(--charcoal)] flex-1">
+                {product.name}
+              </h1>
+              <div className="flex flex-col gap-2">
+                {product.gender && (
+                  <span className="text-[12px] bg-gray-300 text-[var(--charcoal)] px-3 py-1 text-center">
+                    {product.gender}
+                  </span>
+                )}
+                {product.isEssential && (
+                  <span className="text-[12px] bg-green-600 text-white px-3 py-1 text-center">
+                    ESSENTIAL
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-baseline gap-3">
+              <p className="text-[24px] text-[var(--crimson)]">
+                ₹{product.price.toFixed(2)}
+              </p>
+              {product.offerPercentage && product.offerPercentage > 0 && (
+                <span className="text-[16px] bg-[var(--crimson)] text-white px-3 py-1">
+                  {product.offerPercentage}% OFF
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Fit Intelligence Entry */}

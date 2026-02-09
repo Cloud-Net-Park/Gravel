@@ -8,9 +8,12 @@ interface ProductCardProps {
   image: string;
   fabric?: string;
   fit?: string;
+  gender?: string;
+  isEssential?: boolean;
+  offerPercentage?: number;
 }
 
-export function ProductCard({ id, name, price, image, fabric, fit }: ProductCardProps) {
+export function ProductCard({ id, name, price, image, fabric, fit, gender, isEssential, offerPercentage }: ProductCardProps) {
   return (
     <div className="group relative bg-white">
       {/* Image Container */}
@@ -20,6 +23,21 @@ export function ProductCard({ id, name, price, image, fabric, fit }: ProductCard
           alt={name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        
+        {/* Offer Badge */}
+        {offerPercentage && offerPercentage > 0 && (
+          <div className="absolute top-4 left-4 bg-[var(--crimson)] text-white px-3 py-1 text-[12px] font-medium">
+            {offerPercentage}% OFF
+          </div>
+        )}
+        
+        {/* Essential Badge */}
+        {isEssential && (
+          <div className="absolute top-4 right-12 bg-green-600 text-white px-3 py-1 text-[12px] font-medium">
+            ESSENTIAL
+          </div>
+        )}
+        
         <button className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
           <Heart size={18} strokeWidth={1.5} className="text-[var(--charcoal)]" />
         </button>
@@ -30,9 +48,16 @@ export function ProductCard({ id, name, price, image, fabric, fit }: ProductCard
 
       {/* Product Info */}
       <div className="space-y-1">
-        <h3 className="text-[14px] text-[var(--charcoal)] tracking-wide">
-          {name}
-        </h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[14px] text-[var(--charcoal)] tracking-wide flex-1">
+            {name}
+          </h3>
+          {gender && (
+            <span className="text-[11px] bg-gray-200 text-[var(--charcoal)] px-2 py-1 whitespace-nowrap">
+              {gender}
+            </span>
+          )}
+        </div>
         {(fabric || fit) && (
           <p className="text-[12px] text-[var(--light-gray)]">
             {[fabric, fit].filter(Boolean).join(' · ')}
