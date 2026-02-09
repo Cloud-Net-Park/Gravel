@@ -658,6 +658,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Waist</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Hips</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Preferred Fit</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Preferred Size</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Notes</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
@@ -665,7 +666,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                 <tbody className="divide-y divide-gray-200">
                   {fitProfiles.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
                         No fit profiles yet. Users can create their profiles to help find the perfect fit.
                       </td>
                     </tr>
@@ -692,6 +693,9 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                           <td className="px-6 py-4 text-gray-600">{profile.hips || '-'} cm</td>
                           <td className="px-6 py-4">
                             <span className="px-2 py-1 text-[12px] font-medium rounded bg-gray-100 capitalize">{profile.preferredFit}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-3 py-1 text-[12px] font-medium rounded bg-blue-100 text-blue-800">{profile.preferredSize || '-'}</span>
                           </td>
                           <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{profile.notes || '-'}</td>
                           <td className="px-6 py-4">

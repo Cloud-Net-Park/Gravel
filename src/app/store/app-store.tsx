@@ -60,6 +60,7 @@ export interface FitProfile {
   waist: string;
   hips: string;
   preferredFit: 'slim' | 'regular' | 'relaxed';
+  preferredSize: string;
   notes?: string;
   createdAt: string;
 }
@@ -640,6 +641,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             waist: profile.waist,
             hips: profile.hips,
             preferred_fit: profile.preferredFit,
+            preferred_size: profile.preferredSize,
             notes: profile.notes || ''
           }
         ])
@@ -656,6 +658,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           waist: data[0].waist,
           hips: data[0].hips,
           preferredFit: data[0].preferred_fit,
+          preferredSize: data[0].preferred_size,
           createdAt: data[0].created_at
         };
         setFitProfiles(prev => [...prev, newProfile]);
@@ -677,6 +680,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           waist: profile.waist,
           hips: profile.hips,
           preferred_fit: profile.preferredFit,
+          preferred_size: profile.preferredSize,
           notes: profile.notes || ''
         })
         .eq('user_id', userId);

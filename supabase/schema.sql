@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS fit_profiles (
   waist TEXT,
   hips TEXT,
   preferred_fit TEXT DEFAULT 'regular' CHECK (preferred_fit IN ('slim', 'regular', 'relaxed')),
+  preferred_size TEXT DEFAULT 'M',
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

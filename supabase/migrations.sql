@@ -15,6 +15,11 @@ CREATE INDEX IF NOT EXISTS idx_products_is_essential ON products(is_essential);
 CREATE INDEX IF NOT EXISTS idx_products_offer_percentage ON products(offer_percentage) WHERE offer_percentage > 0;
 CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
 
+-- Add preferred_size column to fit_profiles if it doesn't exist
+ALTER TABLE fit_profiles
+ADD COLUMN IF NOT EXISTS preferred_size TEXT DEFAULT 'M';
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
+
 -- Ensure fit_profiles table exists with all fields
 CREATE TABLE IF NOT EXISTS fit_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -25,6 +30,7 @@ CREATE TABLE IF NOT EXISTS fit_profiles (
   waist TEXT,
   hips TEXT,
   preferred_fit TEXT DEFAULT 'regular' CHECK (preferred_fit IN ('slim', 'regular', 'relaxed')),
+  preferred_size TEXT DEFAULT 'M',
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

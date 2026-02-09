@@ -16,6 +16,7 @@ export function FitProfileForm({ onSubmit, onCancel, existingProfile, userId }: 
     waist: existingProfile?.waist || '',
     hips: existingProfile?.hips || '',
     preferredFit: (existingProfile?.preferredFit || 'regular') as 'slim' | 'regular' | 'relaxed',
+    preferredSize: existingProfile?.preferredSize || 'M',
     notes: existingProfile?.notes || ''
   });
 
@@ -29,6 +30,7 @@ export function FitProfileForm({ onSubmit, onCancel, existingProfile, userId }: 
     if (!formData.chest.trim()) newErrors.chest = 'Chest measurement is required';
     if (!formData.waist.trim()) newErrors.waist = 'Waist measurement is required';
     if (!formData.preferredFit) newErrors.preferredFit = 'Preferred fit is required';
+    if (!formData.preferredSize) newErrors.preferredSize = 'Preferred size is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -47,6 +49,7 @@ export function FitProfileForm({ onSubmit, onCancel, existingProfile, userId }: 
       waist: formData.waist,
       hips: formData.hips,
       preferredFit: formData.preferredFit,
+      preferredSize: formData.preferredSize,
       notes: formData.notes
     });
   };
@@ -173,6 +176,30 @@ export function FitProfileForm({ onSubmit, onCancel, existingProfile, userId }: 
               <option value="relaxed">Relaxed Fit</option>
             </select>
             {errors.preferredFit && <p className="text-red-500 text-[12px] mt-1">{errors.preferredFit}</p>}
+          </div>
+
+          {/* Preferred Size */}
+          <div>
+            <label className="block text-[13px] font-medium text-[var(--charcoal)] mb-2">
+              Preferred Size
+            </label>
+            <select
+              value={formData.preferredSize}
+              onChange={(e) => setFormData({ ...formData, preferredSize: e.target.value })}
+              className={`w-full px-3 py-2 border rounded text-[14px] focus:outline-none ${
+                errors.preferredSize
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-[var(--border)] focus:border-[var(--crimson)]'
+              }`}
+            >
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+            </select>
+            {errors.preferredSize && <p className="text-red-500 text-[12px] mt-1">{errors.preferredSize}</p>}
           </div>
         </div>
 
