@@ -122,7 +122,13 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                 onMouseEnter={() => item.subcategories && setActiveMegaMenu(item.label)}
               >
                 <button
-                  onClick={() => onNavigation?.(item.label)}
+                  onClick={() => {
+                    if (item.label === 'Essentials') {
+                      onFilterNavigation?.('essentials', 'true');
+                    } else {
+                      onNavigation?.(item.label);
+                    }
+                  }}
                   className="text-[14px] tracking-wide text-[var(--charcoal)] hover:text-[var(--crimson)] transition-colors py-4 block relative cursor-pointer bg-transparent border-none"
                 >
                   {item.label}
@@ -257,7 +263,11 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                 <button
                   key={item.label}
                   onClick={() => {
-                    onNavigation?.(item.label);
+                    if (item.label === 'Essentials') {
+                      onFilterNavigation?.('essentials', 'true');
+                    } else {
+                      onNavigation?.(item.label);
+                    }
                     setMobileMenuOpen(false);
                   }}
                   className="w-full text-left py-3 text-[16px] text-[var(--charcoal)] border-b border-[var(--border)] hover:text-[var(--crimson)] transition-colors bg-none border-none cursor-pointer"

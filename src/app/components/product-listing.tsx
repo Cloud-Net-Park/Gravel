@@ -18,12 +18,14 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
     fit: string[];
     size: string[];
     price: string[];
+    essentials: boolean;
   }>({
     category: [],
     fabric: [],
     fit: [],
     size: [],
-    price: []
+    price: [],
+    essentials: false
   });
   const [sortBy, setSortBy] = useState('new');
 
@@ -31,21 +33,35 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
   useEffect(() => {
     if (initialFilter) {
       const { type, value } = initialFilter;
-      // Map the filter value to match our filter options
-      let filterValue = value;
-      if (type === 'fit' && !value.includes('Fit')) {
-        filterValue = value + ' Fit';
-      }
       
-      setSelectedFilters(prev => ({
-        ...prev,
-        category: [],
-        fabric: [],
-        fit: [],
-        size: [],
-        price: [],
-        [type]: [filterValue]
-      }));
+      if (type === 'essentials') {
+        setSelectedFilters(prev => ({
+          ...prev,
+          category: [],
+          fabric: [],
+          fit: [],
+          size: [],
+          price: [],
+          essentials: true
+        }));
+      } else {
+        // Map the filter value to match our filter options
+        let filterValue = value;
+        if (type === 'fit' && !value.includes('Fit')) {
+          filterValue = value + ' Fit';
+        }
+        
+        setSelectedFilters(prev => ({
+          ...prev,
+          category: [],
+          fabric: [],
+          fit: [],
+          size: [],
+          price: [],
+          essentials: false,
+          [type]: [filterValue]
+        }));
+      }
       
       onFilterApplied?.();
     }
@@ -60,12 +76,21 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
   };
 
   const toggleFilter = (filterType: keyof typeof selectedFilters, value: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterType]: prev[filterType].includes(value)
-        ? prev[filterType].filter(v => v !== value)
-        : [...prev[filterType], value]
-    }));
+    setSelectedFilters(prev => {
+      if (filterType === 'essentials') {
+        return {
+          ...prev,
+          essentials: !(prev as typeof prev).essentials
+        };
+      }
+      const filterArray = prev[filterType] as string[];
+      return {
+        ...prev,
+        [filterType]: filterArray.includes(value)
+          ? filterArray.filter(v => v !== value)
+          : [...filterArray, value]
+      };
+    });
   };
 
   const clearFilters = () => {
@@ -74,14 +99,22 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
       fabric: [],
       fit: [],
       size: [],
-      price: []
+      price: [],
+      essentials: false
     });
   };
 
-  const hasActiveFilters = Object.values(selectedFilters).some(arr => arr.length > 0);
+  const hasActiveFilters = Object.values(selectedFilters).some((val) => {
+    if (typeof val === 'boolean') return val;
+    return (val as string[]).length > 0;
+  });
 
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
+    // Essentials filter
+    if (selectedFilters.essentials && !product.isEssential) {
+      return false;
+    }
     // Category filter
     if (selectedFilters.category.length > 0 && (!product.category || !selectedFilters.category.includes(product.category))) {
       return false;
@@ -135,7 +168,7 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           <label key={option} className="flex items-center gap-3 cursor-pointer group">
             <input
               type="checkbox"
-              checked={selectedFilters[filterKey].includes(option)}
+              checked={(selectedFilters[filterKey] as string[]).includes(option)}
               onChange={() => toggleFilter(filterKey, option)}
               className="w-4 h-4 border border-[var(--border)] text-[var(--crimson)] focus:ring-[var(--crimson)] focus:ring-1"
             />
@@ -203,19 +236,35 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
             <div className="flex items-center gap-4">
               {hasActiveFilters && (
                 <div className="flex gap-2 flex-wrap">
-                  {Object.entries(selectedFilters).flatMap(([key, values]) =>
-                    values.map(value => (
-                      <span
-                        key={`${key}-${value}`}
-                        className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--crimson)] text-[var(--crimson)] text-[13px]"
-                      >
-                        {value}
-                        <button onClick={() => toggleFilter(key as keyof typeof selectedFilters, value)}>
-                          <X size={14} />
-                        </button>
-                      </span>
-                    ))
-                  )}
+                  {Object.entries(selectedFilters).flatMap(([key, values]) => {
+                    if (key === 'essentials' && values === true) {
+                      return (
+                        <span
+                          key="essentials-true"
+                          className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--crimson)] text-[var(--crimson)] text-[13px]"
+                        >
+                          Essentials
+                          <button onClick={() => toggleFilter('essentials', '')}>
+                            <X size={14} />
+                          </button>
+                        </span>
+                      );
+                    }
+                    if (Array.isArray(values)) {
+                      return values.map(value => (
+                        <span
+                          key={`${key}-${value}`}
+                          className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--crimson)] text-[var(--crimson)] text-[13px]"
+                        >
+                          {value}
+                          <button onClick={() => toggleFilter(key as keyof typeof selectedFilters, value)}>
+                            <X size={14} />
+                          </button>
+                        </span>
+                      ));
+                    }
+                    return [];
+                  })}
                 </div>
               )}
             </div>
