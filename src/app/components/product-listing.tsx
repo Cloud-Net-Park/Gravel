@@ -83,7 +83,7 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
     // Category filter
-    if (selectedFilters.category.length > 0 && !selectedFilters.category.includes(product.category)) {
+    if (selectedFilters.category.length > 0 && (!product.category || !selectedFilters.category.includes(product.category))) {
       return false;
     }
     // Fabric filter
