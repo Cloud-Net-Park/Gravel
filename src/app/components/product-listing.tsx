@@ -92,13 +92,16 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
 
   const toggleFilter = (filterType: keyof typeof selectedFilters, value: string) => {
     setSelectedFilters(prev => {
-      if (filterType === 'essentials') {
+      if (filterType === 'essentials' || filterType === 'newIn') {
         return {
           ...prev,
-          essentials: !(prev as typeof prev).essentials
+          [filterType]: !(prev[filterType] as boolean)
         };
       }
       const filterArray = prev[filterType] as string[];
+      if (!Array.isArray(filterArray)) {
+        return prev;
+      }
       return {
         ...prev,
         [filterType]: filterArray.includes(value)

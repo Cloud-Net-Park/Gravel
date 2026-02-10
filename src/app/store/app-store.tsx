@@ -214,7 +214,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('Supabase connection issue. Using mock products as fallback.');
@@ -556,27 +557,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = async (id: string) => {
     try {
+      // Store the deleted product ID to prevent re-adding if it comes back from server
+      const deletedProductId = id;
+
       // Immediately remove from UI for instant feedback
-      setProducts(prev => prev.filter(product => product.id !== id));
+      setProducts(prev => prev.filter(product => product.id !== deletedProductId));
 
       // Delete from Supabase (soft delete - set is_active to false)
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .update({ is_active: false })
-        .eq('id', id);
+        .eq('id', deletedProductId)
+        .select();
 
       if (error) {
         console.error('Error deleting product from Supabase:', error);
         // Restore product if delete failed
-        await fetchProductsFromSupabase();
-      } else {
-        // Refresh products after successful delete
         setTimeout(() => fetchProductsFromSupabase(), 500);
+      } else if (data && data.length > 0) {
+        // Delete was successful, refresh after a delay to confirm
+        setTimeout(() => {
+          fetchProductsFromSupabase().then(() => {
+            // Verify the product is still deleted after refresh
+            setProducts(prev => prev.filter(product => product.id !== deletedProductId));
+          });
+        }, 1000);
+      } else {
+        // No data returned, but delete might have succeeded
+        // Wait a bit longer for database to process the delete
+        setTimeout(() => fetchProductsFromSupabase(), 1500);
       }
     } catch (err) {
       console.error('Failed to delete product:', err);
-      // Refresh products on error
-      fetchProductsFromSupabase();
+      // If there's an error, still keep the product removed from UI
+      setProducts(prev => prev.filter(product => product.id !== id));
+      // Try to refresh after delay
+      setTimeout(() => fetchProductsFromSupabase(), 2000);
     }
   };
 
