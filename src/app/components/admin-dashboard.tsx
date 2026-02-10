@@ -699,18 +699,26 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                   ) : (
                     fitProfiles.map((profile: any) => {
                       const user = getUserById(profile.userId);
-                      // Use bodyType directly from profile (no need to extract from notes)
+                      // Use bodyType directly from profile
                       const bodyType = profile.bodyType || '-';
+
+                      // Show user if found, otherwise show userId
+                      const displayName = user?.name || 'User';
+                      const displayEmail = user?.email || profile.userId;
+                      const userInitials = user?.name
+                        ? user.name.split(' ').map((n: string) => n[0]).join('')
+                        : profile.userId.substring(0, 2).toUpperCase();
+
                       return (
                         <tr key={profile.userId} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-[var(--crimson)] flex items-center justify-center text-white text-[14px] font-medium">
-                                {user?.name.split(' ').map((n: string) => n[0]).join('') || '?'}
+                                {userInitials}
                               </div>
                               <div>
-                                <p className="text-[14px] font-medium">{user?.name || 'Unknown'}</p>
-                                <p className="text-[12px] text-gray-500">{user?.email}</p>
+                                <p className="text-[14px] font-medium">{displayName}</p>
+                                <p className="text-[12px] text-gray-500">{displayEmail}</p>
                               </div>
                             </div>
                           </td>
