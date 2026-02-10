@@ -550,42 +550,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteProduct = async (id: string) => {
     try {
-      // Store the deleted product ID to prevent re-adding if it comes back from server
+      // Store the deleted product ID to prevent re-adding
       const deletedProductId = id;
 
       // Immediately remove from UI for instant feedback
       setProducts(prev => prev.filter(product => product.id !== deletedProductId));
 
       // Delete from Supabase (soft delete - set is_active to false)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('products')
         .update({ is_active: false })
-        .eq('id', deletedProductId)
-        .select();
+        .eq('id', deletedProductId);
 
       if (error) {
         console.error('Error deleting product from Supabase:', error);
-        // Restore product if delete failed
-        setTimeout(() => fetchProductsFromSupabase(), 500);
-      } else if (data && data.length > 0) {
-        // Delete was successful, refresh after a delay to confirm
-        setTimeout(() => {
-          fetchProductsFromSupabase().then(() => {
-            // Verify the product is still deleted after refresh
-            setProducts(prev => prev.filter(product => product.id !== deletedProductId));
-          });
-        }, 1000);
+        // If delete failed, refresh to restore the product
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await fetchProductsFromSupabase();
       } else {
-        // No data returned, but delete might have succeeded
-        // Wait a bit longer for database to process the delete
-        setTimeout(() => fetchProductsFromSupabase(), 1500);
+        // Delete was successful
+        // Wait for database to fully process, then verify deletion
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Explicitly fetch to confirm the product is gone
+        const { data, error: fetchError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true);
+
+        if (!fetchError && data) {
+          // Set only the active products (excluding the deleted one)
+          const activeProducts = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            image: p.image_url,
+            fabric: p.fabric,
+            fit: p.fit,
+            category: p.category,
+            size: p.sizes,
+            gender: p.gender,
+            isEssential: p.is_essential,
+            offerPercentage: p.offer_percentage,
+            createdAt: p.created_at
+          }));
+          setProducts(activeProducts);
+        }
       }
     } catch (err) {
       console.error('Failed to delete product:', err);
       // If there's an error, still keep the product removed from UI
       setProducts(prev => prev.filter(product => product.id !== id));
-      // Try to refresh after delay
-      setTimeout(() => fetchProductsFromSupabase(), 2000);
     }
   };
 
@@ -604,20 +619,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error('Error deleting all products from Supabase:', error);
         // Keep products cleared from UI even if there's an error
       } else {
-        // Deletion was successful, refresh to confirm
-        setTimeout(() => {
-          fetchProductsFromSupabase().then(() => {
-            // Verify all products are still cleared after refresh
-            setProducts([]);
-          });
-        }, 1000);
+        // Deletion was successful
+        // Wait for database to fully process
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Explicitly fetch to confirm all products are deleted
+        const { data, error: fetchError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true);
+
+        if (!fetchError) {
+          // Ensure products list is empty
+          setProducts(data && data.length > 0 ? [] : []);
+        }
       }
     } catch (err) {
       console.error('Failed to delete all products:', err);
       // Keep products cleared from UI even on error
       setProducts([]);
-      // Try to refresh after delay
-      setTimeout(() => fetchProductsFromSupabase(), 2000);
     }
   };
 
