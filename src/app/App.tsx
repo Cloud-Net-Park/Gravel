@@ -264,7 +264,7 @@ function AppContent() {
         />
       )}
 
-      {currentStep === 'fit' && currentUser && (
+      {currentPage === 'fit' && currentUser && (
         <FitIntelligence
           onClose={() => setCurrentPage('product')}
           onComplete={(recommendedSize) => {
