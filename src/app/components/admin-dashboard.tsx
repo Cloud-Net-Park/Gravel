@@ -51,7 +51,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   const { 
     users, orders, products, fitProfiles, cartItems, 
     updateOrderStatus, 
-    addProduct, updateProduct, deleteProduct,
+    addProduct, updateProduct, deleteProduct, deleteAllProducts,
     addUser, updateUser, deleteUser,
     deleteOrder, deleteFitProfile, getFitProfiles
   } = useAppStore();
@@ -179,6 +179,15 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   const handleDeleteProduct = async (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       await deleteProduct(id);
+    }
+  };
+
+  const handleDeleteAllProducts = async () => {
+    const confirmed = confirm(
+      'Are you sure you want to delete ALL products? This action cannot be undone.\n\nAll existing products will be deleted from the store. You can then add new products.'
+    );
+    if (confirmed) {
+      await deleteAllProducts();
     }
   };
 
@@ -587,9 +596,14 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-0">
                 <h2 className="font-[var(--font-serif)] text-[18px] text-[var(--charcoal)]">All Products ({filteredProducts.length})</h2>
-                <button onClick={handleAddProduct} className="flex items-center gap-2 px-4 py-2 bg-[var(--crimson)] text-white text-[13px] hover:opacity-90 whitespace-nowrap flex-shrink-0">
-                  <Plus size={16} /> Add Product
-                </button>
+                <div className="flex gap-3">
+                  <button onClick={handleDeleteAllProducts} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-[13px] hover:bg-red-700 whitespace-nowrap flex-shrink-0">
+                    <Trash2 size={16} /> Delete All
+                  </button>
+                  <button onClick={handleAddProduct} className="flex items-center gap-2 px-4 py-2 bg-[var(--crimson)] text-white text-[13px] hover:opacity-90 whitespace-nowrap flex-shrink-0">
+                    <Plus size={16} /> Add Product
+                  </button>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -608,33 +622,42 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <ImageWithFallback src={product.image} alt={product.name} className="w-12 h-12 object-cover" />
-                          <span className="text-[14px] font-medium">{product.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.category || '-'}</td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.gender || '-'}</td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.fabric}</td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.fit}</td>
-                      <td className="px-6 py-4 text-[14px] text-[var(--crimson)] font-medium">₹{product.price}</td>
-                      <td className="px-6 py-4 text-[14px] text-gray-600">{product.offerPercentage ? `${product.offerPercentage}%` : '-'}</td>
-                      <td className="px-6 py-4 text-[14px]">{product.isEssential ? '✓' : '-'}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleEditProduct(product)} className="p-2 text-gray-400 hover:text-green-600" title="Edit">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDeleteProduct(product.id)} className="p-2 text-gray-400 hover:text-red-600" title="Delete">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                        <p className="text-[14px] font-medium mb-2">No products available</p>
+                        <p className="text-[13px]">Click "Add Product" to create your first product</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <ImageWithFallback src={product.image} alt={product.name} className="w-12 h-12 object-cover" />
+                            <span className="text-[14px] font-medium">{product.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-[14px] text-gray-600">{product.category || '-'}</td>
+                        <td className="px-6 py-4 text-[14px] text-gray-600">{product.gender || '-'}</td>
+                        <td className="px-6 py-4 text-[14px] text-gray-600">{product.fabric}</td>
+                        <td className="px-6 py-4 text-[14px] text-gray-600">{product.fit}</td>
+                        <td className="px-6 py-4 text-[14px] text-[var(--crimson)] font-medium">₹{product.price}</td>
+                        <td className="px-6 py-4 text-[14px] text-gray-600">{product.offerPercentage ? `${product.offerPercentage}%` : '-'}</td>
+                        <td className="px-6 py-4 text-[14px]">{product.isEssential ? '✓' : '-'}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleEditProduct(product)} className="p-2 text-gray-400 hover:text-green-600" title="Edit">
+                              <Edit2 size={18} />
+                            </button>
+                            <button onClick={() => handleDeleteProduct(product.id)} className="p-2 text-gray-400 hover:text-red-600" title="Delete">
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

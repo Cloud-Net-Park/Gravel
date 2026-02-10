@@ -1,46 +1,35 @@
 import { useState } from 'react';
 import { Heart, Ruler, TruckIcon, RotateCcw, Shield } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { Product } from '../store/app-store';
 
 interface ProductDetailProps {
+  product: Product | null;
   onFitIntelligenceClick: () => void;
-  onAddToCart: () => void;
+  onAddToCart: (product: Product, size: string, quantity: number) => void;
 }
 
-export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDetailProps) {
+export function ProductDetail({ product, onFitIntelligenceClick, onAddToCart }: ProductDetailProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  const product = {
-    name: 'Tailored Wool Blazer',
-    price: 495,
-    gender: 'Men',
-    isEssential: false,
-    offerPercentage: 0,
-    images: [
-      'https://images.unsplash.com/photo-1762417421091-1b4e24facc62?w=1080',
-      'https://images.unsplash.com/photo-1719518411339-5158cea86caf?w=1080',
-      'https://images.unsplash.com/photo-1577909687863-91bb3ec12db5?w=1080'
-    ],
-    fabric: 'Italian Wool',
-    fabricDetails: 'Woven from 100% superfine merino wool sourced from Italian mills, this fabric offers exceptional drape and breathability. The tight weave ensures durability while maintaining a soft hand feel.',
-    fit: 'Regular Fit',
-    fitDetails: 'Designed with a classic silhouette that sits comfortably at the shoulders with a gently tapered waist. Allows for layering while maintaining a refined profile.',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    care: [
-      'Dry clean only',
-      'Store on a wooden hanger',
-      'Steam to remove wrinkles',
-      'Brush regularly to maintain texture'
-    ],
-    features: [
-      'Horn buttons',
-      'Full canvas construction',
-      'Working cuff buttons',
-      'Interior pocket',
-      'Made in Portugal'
-    ]
-  };
+  // Show empty state if no product is selected
+  if (!product) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-6 py-12">
+        <div className="flex items-center justify-center min-h-[600px]">
+          <div className="text-center">
+            <p className="text-[18px] font-[var(--font-serif)] text-[var(--charcoal)] mb-4">
+              No Product Selected
+            </p>
+            <p className="text-[14px] text-[var(--light-gray)]">
+              Select a product from the listing to view details
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 py-12">
@@ -50,21 +39,10 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
           <div className="sticky top-24 space-y-4">
             <div className="aspect-[3/4] bg-white overflow-hidden">
               <ImageWithFallback
-                src={product.images[0]}
+                src={product.image}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              {product.images.slice(1).map((image, index) => (
-                <div key={index} className="aspect-[3/4] bg-white overflow-hidden cursor-pointer hover:opacity-75 transition-opacity">
-                  <ImageWithFallback
-                    src={image}
-                    alt={`${product.name} view ${index + 2}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -122,19 +100,23 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
               </button>
             </div>
             <div className="grid grid-cols-5 gap-2">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`h-12 border text-[14px] transition-all ${
-                    selectedSize === size
-                      ? 'border-[var(--crimson)] bg-[var(--crimson)] text-white'
-                      : 'border-[var(--border)] bg-white text-[var(--charcoal)] hover:border-[var(--crimson)]'
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
+              {product.size && product.size.length > 0 ? (
+                product.size.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`h-12 border text-[14px] transition-all ${
+                      selectedSize === size
+                        ? 'border-[var(--crimson)] bg-[var(--crimson)] text-white'
+                        : 'border-[var(--border)] bg-white text-[var(--charcoal)] hover:border-[var(--crimson)]'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))
+              ) : (
+                <p className="text-[14px] text-[var(--light-gray)]">No sizes available</p>
+              )}
             </div>
           </div>
 
@@ -165,7 +147,13 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
           {/* Add to Cart */}
           <div className="flex gap-3 mb-12">
             <button
-              onClick={onAddToCart}
+              onClick={() => {
+                if (selectedSize) {
+                  onAddToCart(product, selectedSize, quantity);
+                  setSelectedSize(null);
+                  setQuantity(1);
+                }
+              }}
               disabled={!selectedSize}
               className="flex-1 h-14 bg-[var(--crimson)] text-white text-[14px] tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -182,7 +170,7 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
               Fabric: {product.fabric}
             </h3>
             <p className="text-[14px] text-[var(--charcoal)] leading-relaxed">
-              {product.fabricDetails}
+              {product.fabric ? `Premium ${product.fabric} fabric for superior quality and comfort.` : 'No fabric details available.'}
             </p>
           </div>
 
@@ -192,38 +180,8 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
               Fit & Silhouette: {product.fit}
             </h3>
             <p className="text-[14px] text-[var(--charcoal)] leading-relaxed">
-              {product.fitDetails}
+              {product.fit ? `This item features a ${product.fit} silhouette for optimal comfort and style.` : 'No fit details available.'}
             </p>
-          </div>
-
-          {/* Features */}
-          <div className="mb-8 pb-8 border-b border-[var(--border)]">
-            <h3 className="font-[var(--font-serif)] text-[17px] mb-3 text-[var(--charcoal)]">
-              Features
-            </h3>
-            <ul className="space-y-2">
-              {product.features.map((feature, index) => (
-                <li key={index} className="text-[14px] text-[var(--charcoal)] flex items-start">
-                  <span className="inline-block w-1 h-1 rounded-full bg-[var(--crimson)] mt-2 mr-3 flex-shrink-0" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Care Instructions */}
-          <div className="mb-8 pb-8 border-b border-[var(--border)]">
-            <h3 className="font-[var(--font-serif)] text-[17px] mb-3 text-[var(--charcoal)]">
-              Care Instructions
-            </h3>
-            <ul className="space-y-2">
-              {product.care.map((instruction, index) => (
-                <li key={index} className="text-[14px] text-[var(--charcoal)] flex items-start">
-                  <span className="inline-block w-1 h-1 rounded-full bg-[var(--crimson)] mt-2 mr-3 flex-shrink-0" />
-                  {instruction}
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* Service Icons */}
@@ -249,3 +207,5 @@ export function ProductDetail({ onFitIntelligenceClick, onAddToCart }: ProductDe
     </div>
   );
 }
+
+

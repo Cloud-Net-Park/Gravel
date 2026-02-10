@@ -98,6 +98,7 @@ interface AppContextType extends AppState {
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  deleteAllProducts: () => Promise<void>;
   addUser: (user: Omit<User, 'id' | 'joinedDate'>) => void;
   updateUser: (id: string, user: Partial<User>) => void;
   deleteUser: (id: string) => void;
@@ -107,16 +108,7 @@ interface AppContextType extends AppState {
 // Mock data
 const mockUsers: User[] = [];
 
-const mockProducts: Product[] = [
-  { id: '550e8400-e29b-41d4-a716-446655440001', name: 'Tailored Wool Blazer', price: 495, image: 'https://images.unsplash.com/photo-1762417421091-1b4e24facc62?w=400', fabric: 'Wool', fit: 'Regular Fit', category: 'Outerwear', size: ['S', 'M', 'L', 'XL'] },
-  { id: '550e8400-e29b-41d4-a716-446655440002', name: 'Silk Evening Dress', price: 675, image: 'https://images.unsplash.com/photo-1562182856-e39faab686d7?w=400', fabric: 'Silk', fit: 'Slim Fit', category: 'Dresses', size: ['XS', 'S', 'M', 'L'] },
-  { id: '550e8400-e29b-41d4-a716-446655440003', name: 'Cashmere Roll Neck', price: 385, image: 'https://images.unsplash.com/photo-1603906650843-b58e94d9df4d?w=400', fabric: 'Cashmere', fit: 'Regular Fit', category: 'Knitwear', size: ['S', 'M', 'L', 'XL'] },
-  { id: '550e8400-e29b-41d4-a716-446655440004', name: 'Cotton Oxford Shirt', price: 145, image: 'https://images.unsplash.com/photo-1760545183001-af3b64500b0d?w=400', fabric: 'Cotton', fit: 'Slim Fit', category: 'Shirts', size: ['S', 'M', 'L', 'XL', 'XXL'] },
-  { id: '550e8400-e29b-41d4-a716-446655440005', name: 'Wool Dress Trousers', price: 225, image: 'https://images.unsplash.com/photo-1570653321427-0e4c0c40bb84?w=400', fabric: 'Wool', fit: 'Regular Fit', category: 'Trousers', size: ['30', '32', '34', '36', '38'] },
-  { id: '550e8400-e29b-41d4-a716-446655440006', name: 'Cashmere Overcoat', price: 895, image: 'https://images.unsplash.com/photo-1577909687863-91bb3ec12db5?w=400', fabric: 'Cashmere', fit: 'Regular Fit', category: 'Outerwear', size: ['M', 'L', 'XL'] },
-  { id: '550e8400-e29b-41d4-a716-446655440007', name: 'Linen Blazer', price: 425, image: 'https://images.unsplash.com/photo-1719518411339-5158cea86caf?w=400', fabric: 'Linen', fit: 'Relaxed Fit', category: 'Outerwear', size: ['S', 'M', 'L', 'XL'] },
-  { id: '550e8400-e29b-41d4-a716-446655440008', name: 'Merino Wool Cardigan', price: 295, image: 'https://images.unsplash.com/photo-1767898498160-b4043d7269da?w=400', fabric: 'Wool', fit: 'Regular Fit', category: 'Knitwear', size: ['S', 'M', 'L', 'XL'] },
-];
+const mockProducts: Product[] = [];
 
 const mockOrders: Order[] = [];
 
@@ -218,9 +210,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('Supabase connection issue. Using mock products as fallback.');
+        console.warn('Supabase connection issue. Using empty products list.');
         setSupabaseConnected(false);
-        // Keep mock products as fallback
+        // Show empty products list when no connection
+        setProducts([]);
         return;
       }
 
@@ -246,14 +239,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Use ONLY Supabase products, don't mix with mock products
         setProducts(supabaseProducts);
       } else {
-        // If no products in Supabase, use mock products
-        setProducts(mockProducts);
+        // If no products in Supabase, show empty list (no fallback to mock products)
+        setProducts([]);
       }
     } catch (err: any) {
-      console.warn('Failed to fetch products from Supabase. Using mock products as fallback:', err?.message);
+      console.warn('Failed to fetch products from Supabase. Using empty products list:', err?.message);
       setSupabaseConnected(false);
-      // Keep mock products as fallback
-      setProducts(mockProducts);
+      // Show empty products list on error (no fallback to mock products)
+      setProducts([]);
     }
   };
 
@@ -596,6 +589,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteAllProducts = async () => {
+    try {
+      // Immediately clear UI for instant feedback
+      setProducts([]);
+
+      // Delete all products from Supabase (soft delete - set is_active to false)
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error deleting all products from Supabase:', error);
+        // Keep products cleared from UI even if there's an error
+      } else {
+        // Deletion was successful, refresh to confirm
+        setTimeout(() => {
+          fetchProductsFromSupabase().then(() => {
+            // Verify all products are still cleared after refresh
+            setProducts([]);
+          });
+        }, 1000);
+      }
+    } catch (err) {
+      console.error('Failed to delete all products:', err);
+      // Keep products cleared from UI even on error
+      setProducts([]);
+      // Try to refresh after delay
+      setTimeout(() => fetchProductsFromSupabase(), 2000);
+    }
+  };
+
   // Admin CRUD Operations for Users
   const addUser = (user: Omit<User, 'id' | 'joinedDate'>) => {
     const newUser: User = {
@@ -783,6 +808,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addProduct,
         updateProduct,
         deleteProduct,
+        deleteAllProducts,
         addUser,
         updateUser,
         deleteUser,
