@@ -699,9 +699,8 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                   ) : (
                     fitProfiles.map((profile: any) => {
                       const user = getUserById(profile.userId);
-                      // Extract body type from notes
-                      const bodyTypeMatch = profile.notes?.match(/Body type: (\w+)/);
-                      const bodyType = bodyTypeMatch ? bodyTypeMatch[1] : '-';
+                      // Use bodyType directly from profile (no need to extract from notes)
+                      const bodyType = profile.bodyType || '-';
                       return (
                         <tr key={profile.userId} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
