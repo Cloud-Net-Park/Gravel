@@ -23,6 +23,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
     hips: '',
     bodyType: '',
     fitPreference: '',
+    selectedSize: '',
     photosUploaded: 0
   });
 
@@ -96,12 +97,17 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
     const currentIndex = steps.indexOf(currentStep);
 
     if (currentStep === 'preference') {
-      // Calculate recommended size before moving to result
-      const height = Number(formData.height);
-      const chest = Number(formData.chest);
-      const { size, confidence } = calculateRecommendedSize(height, chest, formData.fitPreference);
-      setRecommendedSize(size);
-      setFitConfidence(confidence);
+      // Use the user's selected size, or calculate from measurements if they provided them
+      if (formData.selectedSize) {
+        setRecommendedSize(formData.selectedSize);
+        setFitConfidence(95); // High confidence since user selected it
+      } else {
+        const height = Number(formData.height);
+        const chest = Number(formData.chest);
+        const { size, confidence } = calculateRecommendedSize(height, chest, formData.fitPreference);
+        setRecommendedSize(size);
+        setFitConfidence(confidence);
+      }
     }
 
     if (currentIndex < steps.length - 1) {
@@ -224,15 +230,48 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
         {currentStep === 'measurements' && (
           <div className="bg-white p-12">
             <h2 className="font-[var(--font-serif)] text-3xl mb-4 text-[var(--charcoal)]">
-              Your Measurements
+              Your Size & Measurements
             </h2>
             <p className="text-[14px] text-[var(--light-gray)] mb-8">
-              Enter your measurements for accurate fit recommendations. All measurements in centimeters.
+              Select your preferred size or enter measurements for more accurate recommendations.
             </p>
+
+            {/* Size Selection */}
+            <div className="mb-8">
+              <label className="block text-[14px] text-[var(--charcoal)] mb-3 font-medium">
+                Select Your Size <span className="text-[var(--crimson)]">*</span>
+              </label>
+              <div className="grid grid-cols-6 gap-2">
+                {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, selectedSize: size });
+                      setRecommendedSize(size);
+                    }}
+                    className={`h-12 border text-[14px] font-medium transition-all ${
+                      formData.selectedSize === size
+                        ? 'border-[var(--crimson)] bg-[var(--crimson)] text-white'
+                        : 'border-[var(--border)] text-[var(--charcoal)] hover:border-[var(--crimson)]'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--border)] pt-6 mb-6">
+              <p className="text-[13px] text-[var(--light-gray)] mb-4">
+                Optional: Enter measurements for better fit accuracy
+              </p>
+            </div>
+
             <div className="space-y-6 mb-8">
               <div>
                 <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Height (cm) <span className="text-[var(--crimson)]">*</span>
+                  Height (cm) <span className="text-[var(--light-gray)]">(Optional)</span>
                 </label>
                 <input
                   type="number"
@@ -293,7 +332,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
             </div>
             <button
               onClick={goToNextStep}
-              disabled={!formData.height}
+              disabled={!formData.selectedSize}
               className="w-full h-12 bg-[var(--crimson)] text-white text-[14px] tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
@@ -446,13 +485,17 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
                 Your Profile is Ready
               </h2>
               <p className="text-[14px] text-[var(--light-gray)]">
-                Based on your measurements and preferences, we recommend:
+                {formData.selectedSize
+                  ? 'Your selected size has been saved to your profile.'
+                  : 'Based on your measurements and preferences, we recommend:'}
               </p>
             </div>
 
             <div className="bg-[var(--cream)] p-8 mb-8">
               <div className="text-center mb-6">
-                <p className="text-[13px] text-[var(--light-gray)] mb-2">Recommended Size</p>
+                <p className="text-[13px] text-[var(--light-gray)] mb-2">
+                  {formData.selectedSize ? 'Your Selected Size' : 'Recommended Size'}
+                </p>
                 <p className="font-[var(--font-serif)] text-5xl text-[var(--crimson)]">{recommendedSize}</p>
               </div>
               <div className="space-y-3 text-[14px] text-[var(--charcoal)]">
@@ -483,7 +526,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
 
             <div className="bg-blue-50 border border-blue-200 p-4 mb-8 rounded">
               <p className="text-[13px] text-blue-900">
-                ✓ This profile has been saved to your account. You can update your measurements anytime to get new size recommendations.
+                ✓ Your size profile has been saved to your account. You can update it anytime.
               </p>
             </div>
 
