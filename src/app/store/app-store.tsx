@@ -53,14 +53,13 @@ export interface Order {
 }
 
 export interface FitProfile {
+  id?: string;
   userId: string;
+  preferredSize: string;
+  bodyType: string;
   height: string;
   weight: string;
-  chest: string;
-  waist: string;
-  hips: string;
   preferredFit: 'slim' | 'regular' | 'relaxed';
-  preferredSize: string;
   notes?: string;
   createdAt: string;
 }
@@ -676,7 +675,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('fit_profiles')
-        .select('*, users(name, email)');
+        .select('*');
 
       if (error) {
         console.error('Error fetching fit profiles:', error);
@@ -687,19 +686,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const profiles = data.map((p: any) => ({
           id: p.id,
           userId: p.user_id,
+          preferredSize: p.preferred_size,
+          bodyType: p.body_type,
           height: p.height,
           weight: p.weight,
-          chest: p.chest,
-          waist: p.waist,
-          hips: p.hips,
           preferredFit: p.preferred_fit,
           notes: p.notes,
-          userName: p.users?.name,
-          userEmail: p.users?.email,
-          createdAt: p.created_at,
-          updatedAt: p.updated_at
+          createdAt: p.created_at
         }));
         setFitProfiles(profiles as any);
+        console.log('Fit profiles fetched:', profiles);
       }
     } catch (err) {
       console.error('Failed to fetch fit profiles:', err);
@@ -713,13 +709,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .insert([
           {
             user_id: profile.userId,
-            height: profile.height,
-            weight: profile.weight,
-            chest: profile.chest,
-            waist: profile.waist,
-            hips: profile.hips,
-            preferred_fit: profile.preferredFit,
             preferred_size: profile.preferredSize,
+            body_type: profile.bodyType || '',
+            height: profile.height || '',
+            weight: profile.weight || '',
+            preferred_fit: profile.preferredFit || 'regular',
             notes: profile.notes || ''
           }
         ])
@@ -729,18 +723,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error('Error adding fit profile:', error);
       } else if (data && data.length > 0) {
         const newProfile: FitProfile = {
+          id: data[0].id,
           userId: data[0].user_id,
+          preferredSize: data[0].preferred_size,
+          bodyType: data[0].body_type,
           height: data[0].height,
           weight: data[0].weight,
-          chest: data[0].chest,
-          waist: data[0].waist,
-          hips: data[0].hips,
           preferredFit: data[0].preferred_fit,
-          preferredSize: data[0].preferred_size,
+          notes: data[0].notes,
           createdAt: data[0].created_at
         };
         setFitProfiles(prev => [...prev, newProfile]);
-        await getFitProfiles();
+        console.log('Fit profile added successfully:', newProfile);
       }
     } catch (err) {
       console.error('Failed to add fit profile:', err);
@@ -752,13 +746,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase
         .from('fit_profiles')
         .update({
+          preferred_size: profile.preferredSize,
+          body_type: profile.bodyType,
           height: profile.height,
           weight: profile.weight,
-          chest: profile.chest,
-          waist: profile.waist,
-          hips: profile.hips,
           preferred_fit: profile.preferredFit,
-          preferred_size: profile.preferredSize,
           notes: profile.notes || ''
         })
         .eq('user_id', userId);

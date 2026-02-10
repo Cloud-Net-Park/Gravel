@@ -119,14 +119,12 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
       try {
         await addFitProfile({
           userId: currentUser.id,
+          preferredSize: recommendedSize,
+          bodyType: formData.bodyType,
           height: formData.height || '',
           weight: formData.weight || '',
-          chest: '', // Not collected anymore
-          waist: '', // Not collected anymore
-          hips: '', // Not collected anymore
           preferredFit: formData.fitPreference as 'slim' | 'regular' | 'relaxed',
-          preferredSize: recommendedSize,
-          notes: `Body type: ${formData.bodyType}, Selected size: ${formData.selectedSize}`
+          notes: `Selected size: ${formData.selectedSize}`
         });
         console.log('Fit profile saved successfully');
       } catch (error) {
