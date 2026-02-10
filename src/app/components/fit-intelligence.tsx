@@ -10,6 +10,7 @@ interface FitIntelligenceProps {
 type Step = 'intro' | 'measurements' | 'body-type' | 'preference' | 'photos' | 'result';
 
 export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
+  // ✅ ALL STATE DECLARED FIRST
   const { addFitProfile, currentUser } = useAppStore();
   const [currentStep, setCurrentStep] = useState<Step>('intro');
   const [recommendedSize, setRecommendedSize] = useState<string>('M');
@@ -25,6 +26,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
     photosUploaded: 0
   });
 
+  // ✅ THEN DEFINE CONSTANT DATA
   const bodyTypes = [
     { id: 'athletic', label: 'Athletic', description: 'Broad shoulders, defined waist' },
     { id: 'regular', label: 'Regular', description: 'Balanced proportions' },
@@ -37,7 +39,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
     { id: 'relaxed', label: 'Relaxed Fit', description: 'Generous room, easy wear' }
   ];
 
-  // Size recommendation algorithm based on measurements
+  // ✅ THEN DEFINE FUNCTIONS
   const calculateRecommendedSize = (height: number, chest: number, fitPref: string) => {
     let size = 'M'; // Default
     let confidence = 70;
@@ -66,7 +68,6 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
 
       // Adjust for fit preference
       if (fitPref === 'slim') {
-        // Slim fit might suggest size down in some cases
         confidence += 5;
       } else if (fitPref === 'relaxed') {
         confidence += 3;
