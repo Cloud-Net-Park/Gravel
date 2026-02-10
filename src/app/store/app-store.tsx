@@ -179,16 +179,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [currentUser]);
 
-  // Fetch products from Supabase on mount
+  // Fetch products from Supabase on mount and set up real-time listener
   useEffect(() => {
     fetchProductsFromSupabase();
     fetchUsersFromSupabase();
-    // Set up auto-refresh every 5 seconds to catch admin changes
+
+    // Set up real-time subscription for products
+    const productSubscription = supabase
+      .channel('products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          // Refetch products when any change occurs
+          fetchProductsFromSupabase();
+        }
+      )
+      .subscribe();
+
+    // Set up auto-refresh every 5 seconds as fallback
     const interval = setInterval(() => {
       fetchProductsFromSupabase();
       fetchUsersFromSupabase();
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      productSubscription.unsubscribe();
+    };
   }, []);
 
   const fetchProductsFromSupabase = async () => {
@@ -463,7 +481,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
         setProducts(prev => [...prev, newProduct]);
       } else if (data && data.length > 0) {
-        // Add the product with Supabase ID
+        // Immediately add the product to state
         const newProduct: Product = {
           name: data[0].name,
           price: data[0].price,
@@ -479,8 +497,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           id: data[0].id
         };
         setProducts(prev => [...prev, newProduct]);
-        // Refresh products to ensure all data is synced
-        await fetchProductsFromSupabase();
+
+        // Refetch to ensure all data is synced
+        setTimeout(() => fetchProductsFromSupabase(), 500);
       }
     } catch (err) {
       console.error('Failed to add product:', err);
@@ -495,6 +514,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     try {
+      // Immediately update UI for instant feedback
+      setProducts(prev =>
+        prev.map(product =>
+          product.id === id ? { ...product, ...updates } : product
+        )
+      );
+
       // Update in Supabase
       const { error } = await supabase
         .from('products')
@@ -515,31 +541,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error updating product in Supabase:', error);
+        // Refresh products to restore correct state
+        await fetchProductsFromSupabase();
       } else {
         // Refresh products after successful update
-        await fetchProductsFromSupabase();
-        return;
+        setTimeout(() => fetchProductsFromSupabase(), 500);
       }
-      
-      // Update in store as fallback
-      setProducts(prev =>
-        prev.map(product =>
-          product.id === id ? { ...product, ...updates } : product
-        )
-      );
     } catch (err) {
       console.error('Failed to update product:', err);
-      // Fallback to store update
-      setProducts(prev =>
-        prev.map(product =>
-          product.id === id ? { ...product, ...updates } : product
-        )
-      );
+      // Refresh products on error
+      await fetchProductsFromSupabase();
     }
   };
 
   const deleteProduct = async (id: string) => {
     try {
+      // Immediately remove from UI for instant feedback
+      setProducts(prev => prev.filter(product => product.id !== id));
+
       // Delete from Supabase (soft delete - set is_active to false)
       const { error } = await supabase
         .from('products')
@@ -548,18 +567,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error deleting product from Supabase:', error);
+        // Restore product if delete failed
+        await fetchProductsFromSupabase();
       } else {
         // Refresh products after successful delete
-        await fetchProductsFromSupabase();
-        return;
+        setTimeout(() => fetchProductsFromSupabase(), 500);
       }
-      
-      // Delete from store as fallback
-      setProducts(prev => prev.filter(product => product.id !== id));
     } catch (err) {
       console.error('Failed to delete product:', err);
-      // Fallback to store delete
-      setProducts(prev => prev.filter(product => product.id !== id));
+      // Refresh products on error
+      fetchProductsFromSupabase();
     }
   };
 

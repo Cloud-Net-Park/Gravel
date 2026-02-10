@@ -15,7 +15,11 @@ import { AppProvider, useAppStore } from './store/app-store';
 function AppContent() {
   const { currentUser, logoutUser, products } = useAppStore();
   const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'product' | 'fit' | 'cart' | 'admin-login' | 'admin'>('home');
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+    // Check localStorage for persistent admin session
+    const saved = localStorage.getItem('adminSession');
+    return saved === 'true';
+  });
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [pendingAction, setPendingAction] = useState<'cart' | 'wishlist' | null>(null);
   const [initialFilter, setInitialFilter] = useState<{ type: string; value: string } | null>(null);
@@ -23,19 +27,33 @@ function AppContent() {
   // Get first 4 products as featured
   const featuredProducts = products.slice(0, 4);
 
+  // Persist admin session to localStorage
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      localStorage.setItem('adminSession', 'true');
+    } else {
+      localStorage.removeItem('adminSession');
+    }
+  }, [isAdminLoggedIn]);
+
   // Check URL for admin access
   useEffect(() => {
     const checkAdminRoute = () => {
       const hash = window.location.hash;
       if (hash === '#/admin' || hash === '#admin') {
-        setCurrentPage('admin-login');
+        // If already logged in, go to dashboard; otherwise show login
+        if (isAdminLoggedIn) {
+          setCurrentPage('admin');
+        } else {
+          setCurrentPage('admin-login');
+        }
       }
     };
     
     checkAdminRoute();
     window.addEventListener('hashchange', checkAdminRoute);
     return () => window.removeEventListener('hashchange', checkAdminRoute);
-  }, []);
+  }, [isAdminLoggedIn]);
 
   // Show admin login page (separate from user site)
   if (currentPage === 'admin-login') {
