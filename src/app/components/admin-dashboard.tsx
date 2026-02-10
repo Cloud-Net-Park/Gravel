@@ -669,33 +669,35 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
           <div className="bg-white border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="font-[var(--font-serif)] text-[18px] text-[var(--charcoal)]">Fit Profiles ({fitProfiles.length})</h2>
+              <p className="text-[13px] text-gray-500 mt-1">User size preferences and body type information</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-[14px]">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Size</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Body Type</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Height</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Weight</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Chest</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Waist</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Hips</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Preferred Fit</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Preferred Size</th>
-                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Notes</th>
+                    <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Created</th>
                     <th className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {fitProfiles.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                         No fit profiles yet. Users can create their profiles to help find the perfect fit.
                       </td>
                     </tr>
                   ) : (
                     fitProfiles.map((profile: any) => {
                       const user = getUserById(profile.userId);
+                      // Extract body type from notes
+                      const bodyTypeMatch = profile.notes?.match(/Body type: (\w+)/);
+                      const bodyType = bodyTypeMatch ? bodyTypeMatch[1] : '-';
                       return (
                         <tr key={profile.userId} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
@@ -709,18 +711,20 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">{profile.height || '-'} cm</td>
-                          <td className="px-6 py-4 text-gray-600">{profile.weight || '-'} kg</td>
-                          <td className="px-6 py-4 text-gray-600">{profile.chest || '-'} cm</td>
-                          <td className="px-6 py-4 text-gray-600">{profile.waist || '-'} cm</td>
-                          <td className="px-6 py-4 text-gray-600">{profile.hips || '-'} cm</td>
                           <td className="px-6 py-4">
-                            <span className="px-2 py-1 text-[12px] font-medium rounded bg-gray-100 capitalize">{profile.preferredFit}</span>
+                            <span className="px-3 py-1 text-[14px] font-bold rounded bg-[var(--crimson)] text-white">{profile.preferredSize || '-'}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="px-3 py-1 text-[12px] font-medium rounded bg-blue-100 text-blue-800">{profile.preferredSize || '-'}</span>
+                            <span className="px-2 py-1 text-[12px] font-medium rounded bg-blue-100 text-blue-800 capitalize">{bodyType}</span>
                           </td>
-                          <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{profile.notes || '-'}</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.height ? `${profile.height} cm` : '-'}</td>
+                          <td className="px-6 py-4 text-gray-600">{profile.weight ? `${profile.weight} kg` : '-'}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 text-[12px] font-medium rounded bg-gray-100 capitalize">{profile.preferredFit || '-'}</span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 text-[12px]">
+                            {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-'}
+                          </td>
                           <td className="px-6 py-4">
                             <button 
                               onClick={() => handleDeleteFitProfile(profile.userId)} 

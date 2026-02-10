@@ -18,9 +18,6 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
   const [formData, setFormData] = useState({
     height: '',
     weight: '',
-    chest: '',
-    waist: '',
-    hips: '',
     bodyType: '',
     fitPreference: '',
     selectedSize: '',
@@ -93,20 +90,14 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
   };
 
   const goToNextStep = () => {
-    const steps: Step[] = ['intro', 'measurements', 'body-type', 'preference', 'photos', 'result'];
+    const steps: Step[] = ['intro', 'measurements', 'preference', 'photos', 'result'];
     const currentIndex = steps.indexOf(currentStep);
 
     if (currentStep === 'preference') {
-      // Use the user's selected size, or calculate from measurements if they provided them
+      // Use the user's selected size
       if (formData.selectedSize) {
         setRecommendedSize(formData.selectedSize);
-        setFitConfidence(95); // High confidence since user selected it
-      } else {
-        const height = Number(formData.height);
-        const chest = Number(formData.chest);
-        const { size, confidence } = calculateRecommendedSize(height, chest, formData.fitPreference);
-        setRecommendedSize(size);
-        setFitConfidence(confidence);
+        setFitConfidence(95);
       }
     }
 
@@ -116,7 +107,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
   };
 
   const goToPreviousStep = () => {
-    const steps: Step[] = ['intro', 'measurements', 'body-type', 'preference', 'photos', 'result'];
+    const steps: Step[] = ['intro', 'measurements', 'preference', 'photos', 'result'];
     const currentIndex = steps.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1]);
@@ -128,26 +119,25 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
       try {
         await addFitProfile({
           userId: currentUser.id,
-          height: formData.height,
+          height: formData.height || '',
           weight: formData.weight || '',
-          chest: formData.chest || '',
-          waist: formData.waist || '',
-          hips: formData.hips || '',
+          chest: '', // Not collected anymore
+          waist: '', // Not collected anymore
+          hips: '', // Not collected anymore
           preferredFit: formData.fitPreference as 'slim' | 'regular' | 'relaxed',
           preferredSize: recommendedSize,
-          notes: `Body type: ${formData.bodyType}`
+          notes: `Body type: ${formData.bodyType}, Selected size: ${formData.selectedSize}`
         });
         console.log('Fit profile saved successfully');
       } catch (error) {
         console.error('Failed to save fit profile:', error);
-        // Still allow user to proceed even if save fails
       }
     }
     onComplete(recommendedSize);
   };
 
   const renderProgressBar = () => {
-    const steps = ['measurements', 'body-type', 'preference', 'photos', 'result'];
+    const steps = ['measurements', 'preference', 'photos', 'result'];
     const currentIndex = steps.indexOf(currentStep);
     const progress = currentStep === 'intro' ? 0 : ((currentIndex + 1) / steps.length) * 100;
 
@@ -230,10 +220,10 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
         {currentStep === 'measurements' && (
           <div className="bg-white p-12">
             <h2 className="font-[var(--font-serif)] text-3xl mb-4 text-[var(--charcoal)]">
-              Your Size & Measurements
+              Your Size & Body Type
             </h2>
             <p className="text-[14px] text-[var(--light-gray)] mb-8">
-              Select your preferred size or enter measurements for more accurate recommendations.
+              Select your size and body type for personalized fit recommendations.
             </p>
 
             {/* Size Selection */}
@@ -262,16 +252,48 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
               </div>
             </div>
 
+            {/* Body Type Selection */}
+            <div className="mb-8">
+              <label className="block text-[14px] text-[var(--charcoal)] mb-3 font-medium">
+                Select Your Body Type <span className="text-[var(--crimson)]">*</span>
+              </label>
+              <div className="space-y-3">
+                {bodyTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, bodyType: type.id })}
+                    className={`w-full p-4 border text-left transition-all ${
+                      formData.bodyType === type.id
+                        ? 'border-[var(--crimson)] bg-[var(--cream)]'
+                        : 'border-[var(--border)] hover:border-[var(--crimson)]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-[15px] text-[var(--charcoal)] font-medium">{type.label}</h3>
+                        <p className="text-[13px] text-[var(--light-gray)]">{type.description}</p>
+                      </div>
+                      {formData.bodyType === type.id && (
+                        <Check size={20} className="text-[var(--crimson)]" strokeWidth={2} />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Optional Height & Weight */}
             <div className="border-t border-[var(--border)] pt-6 mb-6">
               <p className="text-[13px] text-[var(--light-gray)] mb-4">
-                Optional: Enter measurements for better fit accuracy
+                Optional: Add your height and weight for better recommendations
               </p>
             </div>
 
-            <div className="space-y-6 mb-8">
+            <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
                 <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Height (cm) <span className="text-[var(--light-gray)]">(Optional)</span>
+                  Height (cm)
                 </label>
                 <input
                   type="number"
@@ -283,7 +305,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
               </div>
               <div>
                 <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Weight (kg) <span className="text-[var(--light-gray)]">(Optional)</span>
+                  Weight (kg)
                 </label>
                 <input
                   type="number"
@@ -293,86 +315,11 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
                   className="w-full h-12 px-4 border border-[var(--border)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--crimson)]"
                 />
               </div>
-              <div>
-                <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Chest (cm) <span className="text-[var(--light-gray)]">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.chest}
-                  onChange={(e) => setFormData({ ...formData, chest: e.target.value })}
-                  placeholder="98"
-                  className="w-full h-12 px-4 border border-[var(--border)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--crimson)]"
-                />
-              </div>
-              <div>
-                <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Waist (cm) <span className="text-[var(--light-gray)]">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.waist}
-                  onChange={(e) => setFormData({ ...formData, waist: e.target.value })}
-                  placeholder="84"
-                  className="w-full h-12 px-4 border border-[var(--border)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--crimson)]"
-                />
-              </div>
-              <div>
-                <label className="block text-[14px] text-[var(--charcoal)] mb-2">
-                  Hips (cm) <span className="text-[var(--light-gray)]">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  value={formData.hips}
-                  onChange={(e) => setFormData({ ...formData, hips: e.target.value })}
-                  placeholder="98"
-                  className="w-full h-12 px-4 border border-[var(--border)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--crimson)]"
-                />
-              </div>
             </div>
-            <button
-              onClick={goToNextStep}
-              disabled={!formData.selectedSize}
-              className="w-full h-12 bg-[var(--crimson)] text-white text-[14px] tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Continue
-            </button>
-          </div>
-        )}
 
-        {/* Body Type Step */}
-        {currentStep === 'body-type' && (
-          <div className="bg-white p-12">
-            <h2 className="font-[var(--font-serif)] text-3xl mb-4 text-[var(--charcoal)]">
-              Body Type
-            </h2>
-            <p className="text-[14px] text-[var(--light-gray)] mb-8">
-              Select the body type that best describes your build.
-            </p>
-            <div className="space-y-3 mb-8">
-              {bodyTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setFormData({ ...formData, bodyType: type.id })}
-                  className={`w-full p-6 border text-left transition-all ${
-                    formData.bodyType === type.id
-                      ? 'border-[var(--crimson)] bg-[var(--cream)]'
-                      : 'border-[var(--border)] hover:border-[var(--crimson)]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-[16px] text-[var(--charcoal)]">{type.label}</h3>
-                    {formData.bodyType === type.id && (
-                      <Check size={20} className="text-[var(--crimson)]" strokeWidth={2} />
-                    )}
-                  </div>
-                  <p className="text-[13px] text-[var(--light-gray)]">{type.description}</p>
-                </button>
-              ))}
-            </div>
             <button
               onClick={goToNextStep}
-              disabled={!formData.bodyType}
+              disabled={!formData.selectedSize || !formData.bodyType}
               className="w-full h-12 bg-[var(--crimson)] text-white text-[14px] tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
@@ -485,17 +432,13 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
                 Your Profile is Ready
               </h2>
               <p className="text-[14px] text-[var(--light-gray)]">
-                {formData.selectedSize
-                  ? 'Your selected size has been saved to your profile.'
-                  : 'Based on your measurements and preferences, we recommend:'}
+                Your size profile has been saved successfully.
               </p>
             </div>
 
             <div className="bg-[var(--cream)] p-8 mb-8">
               <div className="text-center mb-6">
-                <p className="text-[13px] text-[var(--light-gray)] mb-2">
-                  {formData.selectedSize ? 'Your Selected Size' : 'Recommended Size'}
-                </p>
+                <p className="text-[13px] text-[var(--light-gray)] mb-2">Your Selected Size</p>
                 <p className="font-[var(--font-serif)] text-5xl text-[var(--crimson)]">{recommendedSize}</p>
               </div>
               <div className="space-y-3 text-[14px] text-[var(--charcoal)]">
@@ -503,16 +446,22 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
                   <span>Fit Confidence</span>
                   <span className="text-[var(--crimson)]">{fitConfidence}%</span>
                 </div>
+                {formData.bodyType && (
+                  <div className="flex justify-between py-3 border-t border-[var(--border)]">
+                    <span>Body Type</span>
+                    <span className="capitalize">{formData.bodyType}</span>
+                  </div>
+                )}
                 {formData.height && (
                   <div className="flex justify-between py-3 border-t border-[var(--border)]">
                     <span>Height</span>
                     <span>{formData.height} cm</span>
                   </div>
                 )}
-                {formData.chest && (
+                {formData.weight && (
                   <div className="flex justify-between py-3 border-t border-[var(--border)]">
-                    <span>Chest</span>
-                    <span>{formData.chest} cm</span>
+                    <span>Weight</span>
+                    <span>{formData.weight} kg</span>
                   </div>
                 )}
                 {formData.fitPreference && (
@@ -526,7 +475,7 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
 
             <div className="bg-blue-50 border border-blue-200 p-4 mb-8 rounded">
               <p className="text-[13px] text-blue-900">
-                ✓ Your size profile has been saved to your account. You can update it anytime.
+                ✓ Your size profile has been saved and shared with our team for personalized service.
               </p>
             </div>
 

@@ -1,16 +1,25 @@
 -- Fit Profiles Table for Grazel Apparel
--- Stores user body measurements and size preferences for personalized recommendations
+-- Stores user size preferences and body type for personalized recommendations
+
+-- Drop existing table and policies if they exist (for clean setup)
+DROP POLICY IF EXISTS "Users can view their own fit profiles" ON fit_profiles;
+DROP POLICY IF EXISTS "Users can insert their own fit profiles" ON fit_profiles;
+DROP POLICY IF EXISTS "Users can update their own fit profiles" ON fit_profiles;
+DROP POLICY IF EXISTS "Users can delete their own fit profiles" ON fit_profiles;
+DROP POLICY IF EXISTS "Admins can view all fit profiles" ON fit_profiles;
+
+-- Drop and recreate table (WARNING: This will delete existing data)
+-- Comment out the next line if you want to keep existing data
+-- DROP TABLE IF EXISTS fit_profiles;
 
 CREATE TABLE IF NOT EXISTS fit_profiles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  height VARCHAR(10) NOT NULL,
-  weight VARCHAR(10),
-  chest VARCHAR(10),
-  waist VARCHAR(10),
-  hips VARCHAR(10),
-  preferred_fit VARCHAR(20) NOT NULL,
   preferred_size VARCHAR(5) NOT NULL,
+  body_type VARCHAR(20),
+  height VARCHAR(10),
+  weight VARCHAR(10),
+  preferred_fit VARCHAR(20),
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -46,4 +55,10 @@ CREATE POLICY "Users can delete their own fit profiles"
   ON fit_profiles
   FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Admin policy: Allow admins to view all fit profiles (for admin dashboard)
+CREATE POLICY "Admins can view all fit profiles"
+  ON fit_profiles
+  FOR SELECT
+  USING (true);
 
