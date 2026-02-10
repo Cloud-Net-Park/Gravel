@@ -117,20 +117,23 @@ export function FitIntelligence({ onClose, onComplete }: FitIntelligenceProps) {
   };
 
   const handleCompleteProfile = async () => {
-    if (currentUser) {
+    if (currentUser && currentUser.id) {
       try {
         await addFitProfile({
+          userId: currentUser.id,
           height: formData.height,
-          weight: formData.weight,
-          chest: formData.chest,
-          waist: formData.waist,
-          hips: formData.hips,
+          weight: formData.weight || '',
+          chest: formData.chest || '',
+          waist: formData.waist || '',
+          hips: formData.hips || '',
           preferredFit: formData.fitPreference as 'slim' | 'regular' | 'relaxed',
           preferredSize: recommendedSize,
           notes: `Body type: ${formData.bodyType}`
         });
+        console.log('Fit profile saved successfully');
       } catch (error) {
         console.error('Failed to save fit profile:', error);
+        // Still allow user to proceed even if save fails
       }
     }
     onComplete(recommendedSize);
