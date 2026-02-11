@@ -1,68 +1,54 @@
 import { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../store/app-store';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface CollectionsPageProps {
-  onShowMore?: (category: string) => void;
   onProductClick?: (product: any) => void;
 }
 
-export function CollectionsPage({ onShowMore, onProductClick }: CollectionsPageProps) {
+export function CollectionsPage({ onProductClick }: CollectionsPageProps) {
   const { products } = useAppStore();
   const [activeCategory, setActiveCategory] = useState<string>('Men');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
-  // Collections data
+  // Collections data with sub-categories based on fabrics
   const collections = [
     {
       id: 'men',
-      title: 'Discover Men',
       label: 'Men',
+      subCategories: ['Cotton', 'Wool', 'Linen', 'Cashmere', 'Silk'],
       description: 'Timeless essentials crafted for the modern man. Explore our curated collection of premium menswear designed with quality and style at the forefront.',
       color: 'from-blue-900/20 to-blue-600/20',
       textColor: 'text-blue-900'
     },
     {
       id: 'women',
-      title: 'Discover Women',
       label: 'Women',
+      subCategories: ['Cotton', 'Wool', 'Linen', 'Cashmere', 'Silk'],
       description: 'Elegant sophistication meets contemporary design. Our womenswear collection celebrates individuality with carefully selected pieces for every occasion.',
       color: 'from-rose-900/20 to-rose-600/20',
       textColor: 'text-rose-900'
-    },
-    {
-      id: 'essentials',
-      title: 'Essentials',
-      label: 'Essentials',
-      description: 'The foundation of a well-curated wardrobe. Versatile pieces that transition seamlessly through seasons and occasions.',
-      color: 'from-slate-900/20 to-slate-600/20',
-      textColor: 'text-slate-900'
     }
   ];
 
-  // Get products for current category
-  const getCategoryProducts = (category: string) => {
-    return products.filter(p =>
-      p.category?.toLowerCase() === category.toLowerCase() ||
-      (category === 'Essentials' && p.isEssential)
-    ).slice(0, 4);
-  };
+  // Get products for current category and sub-category
+  const getCategoryProducts = (category: string, subCategory: string | null) => {
+    return products.filter(p => {
+      const categoryMatch = p.category?.toLowerCase() === category.toLowerCase() ||
+                          (category === 'Essentials' && p.isEssential);
+      if (!categoryMatch) return false;
 
-  // Get all products for category
-  const getAllCategoryProducts = (category: string) => {
-    return products.filter(p =>
-      p.category?.toLowerCase() === category.toLowerCase() ||
-      (category === 'Essentials' && p.isEssential)
-    );
+      // If sub-category selected, filter by fabric
+      if (subCategory) {
+        return p.fabric?.toLowerCase() === subCategory.toLowerCase();
+      }
+      return true;
+    });
   };
 
   const currentCollection = collections.find(c => c.label === activeCategory);
-  const categoryProducts = getCategoryProducts(activeCategory);
-  const allCategoryProducts = getAllCategoryProducts(activeCategory);
-
-  const handleShowMore = () => {
-    onShowMore?.(activeCategory);
-  };
+  const categoryProducts = getCategoryProducts(activeCategory, selectedSubCategory);
 
   const handleProductClick = (product: any) => {
     onProductClick?.(product);
@@ -107,83 +93,94 @@ export function CollectionsPage({ onShowMore, onProductClick }: CollectionsPageP
             {/* Hero Section */}
             <div className={`bg-gradient-to-br ${currentCollection.color} rounded-lg p-12 md:p-16`}>
               <h2 className={`font-[var(--font-serif)] text-3xl md:text-4xl mb-6 ${currentCollection.textColor}`}>
-                {currentCollection.title}
+                Discover {currentCollection.label}
               </h2>
               <p className="text-gray-700 text-lg max-w-2xl leading-relaxed mb-8">
                 {currentCollection.description}
               </p>
-              <button
-                onClick={handleShowMore}
-                className="inline-flex items-center gap-2 bg-[var(--crimson)] text-white px-8 py-3 hover:opacity-90 transition-opacity"
-              >
-                Explore Collection
-                <ArrowRight size={18} />
-              </button>
             </div>
 
-            {/* Products Grid */}
+            {/* Sub-Categories (Fabrics) */}
+            <div>
+              <h3 className="font-[var(--font-serif)] text-2xl mb-6 text-[var(--charcoal)]">
+                Shop by Material
+              </h3>
+              <div className="flex flex-wrap gap-3 mb-8">
+                {/* All Products Button */}
+                <button
+                  onClick={() => setSelectedSubCategory(null)}
+                  className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                    selectedSubCategory === null
+                      ? 'bg-[var(--crimson)] text-white'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  }`}
+                >
+                  All Products
+                </button>
+
+                {/* Sub-Category Buttons (Fabrics) */}
+                {currentCollection.subCategories.map((subCat) => (
+                  <button
+                    key={subCat}
+                    onClick={() => setSelectedSubCategory(subCat)}
+                    className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                      selectedSubCategory === subCat
+                        ? 'bg-[var(--crimson)] text-white'
+                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                  >
+                    {subCat}
+                    {selectedSubCategory === subCat && <ChevronRight size={18} />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Products Grid - All Products (Filtered by Sub-Category) */}
             <div>
               <h3 className="font-[var(--font-serif)] text-2xl mb-8 text-[var(--charcoal)]">
-                Featured Pieces
+                {selectedSubCategory
+                  ? `${currentCollection.label}'s ${selectedSubCategory} Collection`
+                  : `All ${currentCollection.label} Products`}
               </h3>
 
               {categoryProducts.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                    {categoryProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        className="group cursor-pointer"
-                        onClick={() => handleProductClick(product)}
-                      >
-                        <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-gray-100 rounded">
-                          <ImageWithFallback
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {product.offerPercentage && product.offerPercentage > 0 && (
-                            <div className="absolute top-4 left-4 bg-[var(--crimson)] text-white px-3 py-1 text-sm font-medium">
-                              {product.offerPercentage}% OFF
-                            </div>
-                          )}
-                        </div>
-                        <h4 className="text-sm font-medium text-[var(--charcoal)] mb-2 group-hover:text-[var(--crimson)] transition-colors">
-                          {product.name}
-                        </h4>
-                        <p className="text-xs text-gray-500 mb-3">
-                          {[product.fabric, product.fit].filter(Boolean).join(' • ')}
-                        </p>
-                        <p className="text-sm font-semibold text-[var(--crimson)]">
-                          ₹{product.price.toFixed(2)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Show More Button */}
-                  <div className="text-center">
-                    <button
-                      onClick={handleShowMore}
-                      className="inline-flex items-center gap-2 border-2 border-[var(--charcoal)] text-[var(--charcoal)] px-12 py-4 hover:bg-[var(--charcoal)] hover:text-white transition-colors font-medium tracking-wide"
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {categoryProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="group cursor-pointer"
+                      onClick={() => handleProductClick(product)}
                     >
-                      View All {activeCategory} Products
-                      <ArrowRight size={20} />
-                    </button>
-                  </div>
-                </>
+                      <div className="relative aspect-[3/4] mb-4 overflow-hidden bg-gray-100 rounded">
+                        <ImageWithFallback
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {product.offerPercentage && product.offerPercentage > 0 && (
+                          <div className="absolute top-4 left-4 bg-[var(--crimson)] text-white px-3 py-1 text-sm font-medium">
+                            {product.offerPercentage}% OFF
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-medium text-[var(--charcoal)] mb-2 group-hover:text-[var(--crimson)] transition-colors">
+                        {product.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-3">
+                        {[product.fabric, product.fit].filter(Boolean).join(' • ')}
+                      </p>
+                      <p className="text-sm font-semibold text-[var(--crimson)]">
+                        ₹{product.price.toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-16">
                   <p className="text-gray-500 text-lg mb-6">
-                    No products in this collection yet.
+                    No {selectedSubCategory ? `${selectedSubCategory} ` : ''}products available in this category yet.
                   </p>
-                  <button
-                    onClick={() => onShowMore?.(activeCategory)}
-                    className="inline-flex items-center gap-2 text-[var(--crimson)] hover:text-[var(--charcoal)] transition-colors"
-                  >
-                    Browse All Products
-                    <ArrowRight size={18} />
-                  </button>
                 </div>
               )}
             </div>
@@ -192,7 +189,7 @@ export function CollectionsPage({ onShowMore, onProductClick }: CollectionsPageP
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-12 border-t border-gray-200">
               <div className="text-center">
                 <p className="text-2xl font-bold text-[var(--crimson)] mb-2">
-                  {allCategoryProducts.length}
+                  {categoryProducts.length}
                 </p>
                 <p className="text-sm text-gray-600">Products Available</p>
               </div>
