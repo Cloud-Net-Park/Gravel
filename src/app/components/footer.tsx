@@ -4,13 +4,24 @@ import { useState } from 'react';
 import { useAppStore } from '../store/app-store';
 import { supabase } from '../../lib/supabase';
 
+interface FooterLink {
+  label: string;
+  type: 'shop' | 'page' | 'social' | 'scroll';
+  path: string;
+}
+
+interface FooterSection {
+  title: string;
+  links: FooterLink[];
+}
+
 export function Footer() {
-  const { setCurrentPage, setProductCategory } = useAppStore();
+  const { setCurrentPage } = useAppStore();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const footerSections = [
+  const footerSections: FooterSection[] = [
     {
       title: 'Shop',
       links: [
@@ -47,40 +58,41 @@ export function Footer() {
     {
       title: 'Connect',
       links: [
-        { label: 'Newsletter', type: 'scroll', path: 'newsletter' },
         { label: 'Instagram', type: 'social', path: 'https://instagram.com/grazelapparel' },
         { label: 'Facebook', type: 'social', path: 'https://facebook.com/grazelapparel' },
-        { label: 'Pinterest', type: 'social', path: 'https://pinterest.com/grazelapparel' },
-        { label: 'LinkedIn', type: 'social', path: 'https://linkedin.com/company/grazelapparel' }
+        { label: 'Youtube', type: 'social', path: 'https://youtube.com/grazelapparel' },
+        { label: 'Twitter', type: 'social', path: 'https://twitter.com/grazelapparel' }
       ]
     }
   ];
 
-  const handleLinkClick = (link: any) => {
+  const handleLinkClick = (link: FooterLink) => {
     if (link.type === 'shop') {
-      // Extract category from path (e.g., '/products/men' -> 'men')
-      const category = link.path.split('/').pop();
-      setProductCategory(category);
+      // Navigate to products - just change page, category filtering happens in products component
       setCurrentPage('products');
     } else if (link.type === 'page') {
-      // Navigate to other pages
+      // Navigate to other pages based on path
       if (link.path === '/contact') {
         setCurrentPage('contact');
       } else if (link.path === '/about') {
         setCurrentPage('about');
       } else {
-        // For other pages, just set current page to a generic page view
-        setCurrentPage('page');
+        // For other pages, navigate to products as fallback
+        setCurrentPage('products');
       }
     } else if (link.type === 'social') {
+      // Open social media links in new tab
       window.open(link.path, '_blank');
     } else if (link.type === 'scroll') {
+      // Scroll to element if it exists
       const element = document.getElementById(link.path);
-      element?.scrollIntoView({ behavior: 'smooth' });
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
-  const handleNewsletterSubscribe = async (e: React.FormEvent) => {
+  const handleNewsletterSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
@@ -93,7 +105,7 @@ export function Footer() {
 
     try {
       // Insert into newsletter subscribers table
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('newsletter_subscribers')
         .insert([
           {
@@ -101,23 +113,18 @@ export function Footer() {
             subscribed_at: new Date().toISOString(),
             is_active: true
           }
-        ])
-        .select();
+        ]);
 
       if (error) {
-        if (error.code === '23505') {
-          setNewsletterMessage({ type: 'error', text: 'This email is already subscribed' });
+        // 23505 is PostgreSQL unique constraint violation
+        if (error.code === '23505' || error.message?.includes('duplicate')) {
+          setNewsletterMessage({ type: 'error', text: 'This email is already subscribed to our newsletter.' });
         } else {
           setNewsletterMessage({ type: 'error', text: 'Failed to subscribe. Please try again.' });
         }
       } else {
         setNewsletterMessage({ type: 'success', text: 'Thank you for subscribing! Check your email for confirmation.' });
         setNewsletterEmail('');
-        
-        // Optional: Navigate to admin page after 2 seconds
-        setTimeout(() => {
-          setCurrentPage('admin-dashboard');
-        }, 2000);
       }
     } catch (err) {
       setNewsletterMessage({ type: 'error', text: 'An error occurred. Please try again.' });

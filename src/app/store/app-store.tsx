@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { supabase, signUpUser, signInUser, signOutUser, getCurrentSession } from '../../lib/supabase';
 
 // Types
@@ -120,12 +120,14 @@ const mockOrders: Order[] = [];
 
 const mockFitProfiles: FitProfile[] = [];
 
-// Generate unique session ID for this tab/window
-const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  // Generate unique session ID for THIS INSTANCE ONLY (per tab/window)
+  // Use useRef to ensure it's created once per mount and doesn't change on re-renders
+  const sessionIdRef = useRef(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const SESSION_ID = sessionIdRef.current;
+
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -145,7 +147,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Set up Supabase auth listener on mount
   useEffect(() => {
-    // First restore from sessionStorage (per-tab)
+    // First restore from sessionStorage (per-tab with unique SESSION_ID)
     const saved = sessionStorage.getItem(`currentUser_${SESSION_ID}`);
     if (saved) {
       try {

@@ -1,17 +1,22 @@
 -- ============================================
--- GRAZEL APPAREL SUPABASE - COMPLETE DATABASE SETUP
+-- GRAZEL APPAREL - COMPLETE DATABASE SETUP
 -- ============================================
--- Combined SQL file containing all migrations, fixes, and schema
+-- Combined SQL file containing all database schema
+-- for Grazel Apparel e-commerce platform
 -- This file is idempotent - safe to run multiple times
--- Date: February 10, 2026
+-- Date: February 11, 2026
 --
--- CONTENTS:
--- 1. Database Schema (All Tables)
--- 2. Row-Level Security (RLS) Policies
--- 3. Functions and Triggers
--- 4. User Registration Fix
--- 5. Product Fields Migration
--- 6. Newsletter Subscribers Table
+-- FEATURES INCLUDED:
+-- ✓ User authentication and management
+-- ✓ Product catalog management
+-- ✓ Shopping cart system
+-- ✓ Order management
+-- ✓ User fit profiles
+-- ✓ Wishlist/Favorites
+-- ✓ Reviews system
+-- ✓ Multi-user data isolation
+-- ✓ Row Level Security (RLS)
+-- ✓ Performance indexes
 --
 -- TABLES CREATED:
 -- - users
@@ -21,7 +26,7 @@
 -- - order_items
 -- - cart_items
 -- - fit_profiles
--- - wishlist_items
+-- - user_favorites (wishlist)
 -- - reviews
 -- - newsletter_subscribers
 --
@@ -42,6 +47,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create index on email for fast queries (without UNIQUE constraint)
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- 2. User Addresses Table
 CREATE TABLE IF NOT EXISTS user_addresses (
@@ -125,7 +133,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
   UNIQUE(user_id, product_id, selected_size)
 );
 
--- 7. Fit Profiles Table
+-- 7. Fit Profiles Table (User-specific personalization)
 CREATE TABLE IF NOT EXISTS fit_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -134,6 +142,7 @@ CREATE TABLE IF NOT EXISTS fit_profiles (
   chest TEXT,
   waist TEXT,
   hips TEXT,
+  body_type TEXT,
   preferred_fit TEXT DEFAULT 'regular' CHECK (preferred_fit IN ('slim', 'regular', 'relaxed')),
   preferred_size TEXT DEFAULT 'M',
   notes TEXT,
@@ -141,8 +150,8 @@ CREATE TABLE IF NOT EXISTS fit_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. Wishlist Items Table
-CREATE TABLE IF NOT EXISTS wishlist_items (
+-- 8. User Favorites Table (Wishlist)
+CREATE TABLE IF NOT EXISTS user_favorites (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -194,7 +203,7 @@ CREATE INDEX IF NOT EXISTS idx_products_is_essential ON products(is_essential);
 CREATE INDEX IF NOT EXISTS idx_products_offer_percentage ON products(offer_percentage) WHERE offer_percentage > 0;
 CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
 CREATE INDEX IF NOT EXISTS idx_fit_profiles_user_id ON fit_profiles(user_id);
-CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email);
@@ -211,8 +220,9 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fit_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Users can read own profile" ON users;
@@ -234,13 +244,37 @@ DROP POLICY IF EXISTS "Users can read own fit profile" ON fit_profiles;
 DROP POLICY IF EXISTS "Users can insert own fit profile" ON fit_profiles;
 DROP POLICY IF EXISTS "Users can update own fit profile" ON fit_profiles;
 DROP POLICY IF EXISTS "Users can delete own fit profile" ON fit_profiles;
-DROP POLICY IF EXISTS "Users can read own wishlist" ON wishlist_items;
-DROP POLICY IF EXISTS "Users can insert to own wishlist" ON wishlist_items;
-DROP POLICY IF EXISTS "Users can delete from own wishlist" ON wishlist_items;
+DROP POLICY IF EXISTS "Users can read own wishlist" ON user_favorites;
+DROP POLICY IF EXISTS "Users can insert to own wishlist" ON user_favorites;
+DROP POLICY IF EXISTS "Users can delete from own wishlist" ON user_favorites;
 DROP POLICY IF EXISTS "Anyone can read reviews" ON reviews;
 DROP POLICY IF EXISTS "Users can insert own reviews" ON reviews;
 DROP POLICY IF EXISTS "Users can update own reviews" ON reviews;
 DROP POLICY IF EXISTS "Users can delete own reviews" ON reviews;
+DROP POLICY IF EXISTS "Allow read access" ON users;
+DROP POLICY IF EXISTS "Allow read access" ON cart_items;
+DROP POLICY IF EXISTS "Allow read access" ON user_favorites;
+DROP POLICY IF EXISTS "Allow read access" ON orders;
+DROP POLICY IF EXISTS "Allow read access" ON order_items;
+DROP POLICY IF EXISTS "Allow read access" ON fit_profiles;
+DROP POLICY IF EXISTS "Allow read access" ON products;
+DROP POLICY IF EXISTS "Allow insert" ON cart_items;
+DROP POLICY IF EXISTS "Allow insert" ON user_favorites;
+DROP POLICY IF EXISTS "Allow insert" ON orders;
+DROP POLICY IF EXISTS "Allow insert" ON order_items;
+DROP POLICY IF EXISTS "Allow insert" ON fit_profiles;
+DROP POLICY IF EXISTS "Allow insert" ON users;
+DROP POLICY IF EXISTS "Allow update" ON cart_items;
+DROP POLICY IF EXISTS "Allow update" ON user_favorites;
+DROP POLICY IF EXISTS "Allow update" ON orders;
+DROP POLICY IF EXISTS "Allow update" ON fit_profiles;
+DROP POLICY IF EXISTS "Allow update" ON users;
+DROP POLICY IF EXISTS "Allow delete" ON cart_items;
+DROP POLICY IF EXISTS "Allow delete" ON user_favorites;
+DROP POLICY IF EXISTS "Allow delete" ON orders;
+DROP POLICY IF EXISTS "Allow delete" ON order_items;
+DROP POLICY IF EXISTS "Allow delete" ON fit_profiles;
+DROP POLICY IF EXISTS "fit_profiles_policy" ON fit_profiles;
 
 -- Users can read their own profile
 CREATE POLICY "Users can read own profile"
@@ -349,19 +383,19 @@ CREATE POLICY "Users can delete own fit profile"
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Wishlist - users can only access their own
+-- Wishlist/Favorites - users can only access their own
 CREATE POLICY "Users can read own wishlist"
-  ON wishlist_items
+  ON user_favorites
   FOR SELECT
   USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert to own wishlist"
-  ON wishlist_items
+  ON user_favorites
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete from own wishlist"
-  ON wishlist_items
+  ON user_favorites
   FOR DELETE
   USING (auth.uid() = user_id);
 
@@ -467,46 +501,26 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
--- SECTION 6: VERIFICATION AND CHECKS
+-- SECTION 6: VERIFICATION
 -- ============================================
 
--- Verify tables created
-SELECT 'Schema verification:' as check_item;
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-
--- Verify indexes created
-SELECT 'Index verification:' as check_item;
-SELECT indexname
-FROM pg_indexes
-WHERE schemaname = 'public'
-ORDER BY indexname;
-
--- Verify RLS is enabled
-SELECT 'RLS verification:' as check_item;
-SELECT tablename, rowsecurity
-FROM pg_tables
-WHERE schemaname = 'public'
-AND rowsecurity = true
-ORDER BY tablename;
-
--- ============================================
--- SETUP COMPLETE
--- ============================================
 -- Database is now ready for:
--- ✓ User authentication
+-- ✓ User authentication and registration
 -- ✓ Product catalog with real-time updates
--- ✓ Shopping cart and orders
--- ✓ Fit profiles for personalized recommendations
+-- ✓ Shopping cart (multi-user with independent sessions)
+-- ✓ Order management
+-- ✓ User fit profiles for personalization
+-- ✓ Wishlist/Favorites system
 -- ✓ Reviews and ratings
--- ✓ Wishlist functionality
 -- ✓ Newsletter subscriptions
--- ✓ Row-level security for data privacy
--- ✓ Automatic data sync
---
--- All tables are idempotent - safe to run multiple times
--- Last updated: February 10, 2026
+-- ✓ Row Level Security for data protection
+-- ✓ Performance optimization with indexes
+
 -- ============================================
+-- SETUP COMPLETE!
+-- ============================================
+-- All tables, indexes, and policies are ready
+-- Application can now connect and use the database
+-- Date: February 11, 2026
+-- Version: 1.0 (Combined schema)
 

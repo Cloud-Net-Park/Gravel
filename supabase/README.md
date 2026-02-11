@@ -6,17 +6,17 @@ This directory contains the **complete database setup** for Grazel Apparel.
 
 ---
 
-## 🚀 **USE THIS FILE: `complete.sql`**
+## 🚀 **USE THIS FILE: `schema.sql`**
 
-**`complete.sql`** is the only file you need. It contains:
+**`schema.sql`** is the ONLY file you need. It contains:
 
 ✅ All 10 database tables  
 ✅ Performance indexes  
-✅ Row-level security (RLS)  
-✅ User registration fixes  
-✅ Product field migrations  
-✅ Triggers and functions  
-✅ Complete schema  
+✅ Row-level security (RLS) policies
+✅ User registration and sync functions
+✅ Order number generation triggers
+✅ Multi-user data isolation
+✅ Complete e-commerce schema  
 
 **Everything in one file. Idempotent. Safe to run multiple times.**
 
@@ -33,7 +33,7 @@ Go to: https://app.supabase.com
 Click "New Query" button
 
 ### Step 3: Copy & Run
-1. Open `complete.sql`
+1. Open `schema.sql`
 2. Copy ALL content
 3. Paste into SQL editor
 4. Click "Run"
@@ -47,7 +47,124 @@ Click "New Query" button
 
 ### 10 Tables
 ```
-users
+✓ users                  - User accounts and profiles
+✓ user_addresses         - Shipping/billing addresses
+✓ products               - Product catalog
+✓ orders                 - Customer orders
+✓ order_items            - Order line items
+✓ cart_items             - Shopping cart (user-specific)
+✓ fit_profiles           - User fit preferences
+✓ user_favorites         - Wishlist/favorites (user-specific)
+✓ reviews                - Product reviews
+✓ newsletter_subscribers - Newsletter subscriptions
+```
+
+### Features
+```
+✓ Multi-user support with independent sessions
+✓ Row Level Security (RLS) for data protection
+✓ User authentication via Supabase Auth
+✓ Automatic order number generation
+✓ User data isolation (each user sees only their data)
+✓ Performance indexes on frequently queried columns
+✓ Automatic timestamps and audit trails
+```
+
+---
+
+## 📋 File Structure
+
+```
+supabase/
+├── schema.sql          ← RUN THIS FILE (combined schema)
+└── README.md           ← You are here
+```
+
+**OLD FILES REMOVED:**
+- ~~complete.sql~~ (merged into schema.sql)
+- ~~fit_profiles.sql~~ (merged into schema.sql)
+- ~~multi_user_setup.sql~~ (merged into schema.sql)
+
+---
+
+## 🔐 Security Features
+
+### Row Level Security (RLS) Policies
+Each table has RLS policies that ensure:
+- Users can only see their own data
+- Users can only modify their own data
+- Products are visible to everyone
+- Reviews are visible to everyone (but users can only edit their own)
+
+### Data Isolation
+```
+Each user has separate:
+- Cart (cart_items table with user_id)
+- Orders (orders table with user_id)
+- Fit profile (fit_profiles table with unique user_id)
+- Wishlist/Favorites (user_favorites table with user_id)
+```
+
+---
+
+## 🚀 Application Integration
+
+The frontend application is configured to:
+1. Use sessionStorage for per-tab user sessions
+2. Use localStorage for user-specific data (cart, favorites, profiles)
+3. Map all user data by userId (key-value pairs)
+4. Support multiple users on same device (different tabs)
+5. Sync with Supabase RLS policies
+
+---
+
+## ✅ Verification
+
+After running the SQL, you should see:
+- ✓ All 10 tables created
+- ✓ All indexes created
+- ✓ RLS enabled on all tables
+- ✓ RLS policies created
+- ✓ Functions created
+- ✓ Triggers created
+
+No errors should appear.
+
+---
+
+## 🔄 Idempotency
+
+This file is **100% idempotent**, meaning:
+- Safe to run multiple times
+- Existing objects won't be duplicated
+- Uses `CREATE TABLE IF NOT EXISTS`
+- Drops and recreates policies safely
+
+You can run this file as many times as needed.
+
+---
+
+## 📞 Support
+
+If you encounter issues:
+1. Check that all content was copied
+2. Verify Supabase project is active
+3. Check SQL error messages for hints
+4. Try running in smaller chunks if needed
+
+---
+
+## 📅 Version Info
+
+- **Date:** February 11, 2026
+- **Version:** 1.0 (Combined schema)
+- **Status:** Production Ready
+- **Tested:** Yes
+
+---
+
+**Ready to use! Copy `schema.sql` and run in Supabase SQL Editor.** ✨
+
 user_addresses
 products
 orders

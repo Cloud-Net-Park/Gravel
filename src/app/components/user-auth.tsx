@@ -62,14 +62,10 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
 
       if (signUpError) throw signUpError;
 
-      if (data.user?.identities?.length === 0) {
-        setError('Email already registered. Please login instead.');
-        setLoading(false);
-        return;
-      }
-
+      // Removed identities check - allows re-registration of deleted users with same email
       if (data.user) {
         // Store new user in Supabase users table
+        // Use upsert with onConflict to handle re-registration
         try {
           await supabase
             .from('users')
@@ -83,11 +79,12 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
             ], { onConflict: 'id' });
         } catch (dbErr) {
           console.error('Error storing user in database:', dbErr);
+          // Even if DB insert fails, auth was successful
         }
-      }
 
-      // Account created - show success and prompt to login
-      setStep('signup-success');
+        // Account created - show success and prompt to login
+        setStep('signup-success');
+      }
     } catch (err: any) {
       console.error('Signup error:', err);
       if (err.message?.includes('rate limit')) {

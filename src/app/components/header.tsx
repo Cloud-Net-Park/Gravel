@@ -52,9 +52,9 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
       <div className="bg-[var(--cream)] border-b border-[var(--border)]">
         <div className="max-w-[1440px] mx-auto px-6">
           <div className="flex items-center justify-end gap-6 h-10">
-            <a href="#" className="text-[13px] text-[var(--charcoal)] hover:text-[var(--crimson)] transition-colors">
-              Store Locator
-            </a>
+            {/*<a href="#" className="text-[13px] text-[var(--charcoal)] hover:text-[var(--crimson)] transition-colors">*/}
+            {/*  Store Locator*/}
+            {/*</a>*/}
             <a href="#" className="text-[13px] text-[var(--charcoal)] hover:text-[var(--crimson)] transition-colors">
               Help
             </a>
@@ -127,6 +127,9 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                       onFilterNavigation?.('essentials', 'true');
                     } else if (item.label === 'New In') {
                       onFilterNavigation?.('new_in', 'true');
+                    } else if (item.label === 'Collections') {
+                      // Navigate to collections page
+                      onNavigation?.('collections');
                     } else {
                       onNavigation?.(item.label);
                     }
@@ -269,6 +272,8 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                       onFilterNavigation?.('essentials', 'true');
                     } else if (item.label === 'New In') {
                       onFilterNavigation?.('new_in', 'true');
+                    } else if (item.label === 'Collections') {
+                      onNavigation?.('collections');
                     } else {
                       onNavigation?.(item.label);
                     }

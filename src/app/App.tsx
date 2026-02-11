@@ -10,11 +10,12 @@ import { AdminDashboard } from './components/admin-dashboard';
 import { AdminLogin } from './components/admin-login';
 import { UserAuth } from './components/user-auth';
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
+import { CollectionsPage } from './components/collections-page';
 import { AppProvider, useAppStore } from './store/app-store';
 
 function AppContent() {
   const { currentUser, logoutUser, products, addToCart } = useAppStore();
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'product' | 'fit' | 'cart' | 'admin-login' | 'admin'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'product' | 'fit' | 'cart' | 'admin-login' | 'admin' | 'collections'>('home');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     // Check localStorage for persistent admin session
@@ -108,8 +109,12 @@ function AppContent() {
         }}
         onProducts={() => setCurrentPage('products')}
         onNavigation={(category) => {
-          setInitialFilter(null);
-          setCurrentPage('products');
+          if (category === 'collections') {
+            setCurrentPage('collections');
+          } else {
+            setInitialFilter(null);
+            setCurrentPage('products');
+          }
         }}
         onFilterNavigation={(filterType, filterValue) => {
           setInitialFilter({ type: filterType, value: filterValue });
@@ -238,6 +243,15 @@ function AppContent() {
           }}
           initialFilter={initialFilter}
           onFilterApplied={() => setInitialFilter(null)}
+        />
+      )}
+
+      {currentPage === 'collections' && (
+        <CollectionsPage
+          onShowMore={(category) => {
+            setInitialFilter({ type: 'category', value: category });
+            setCurrentPage('products');
+          }}
         />
       )}
 
