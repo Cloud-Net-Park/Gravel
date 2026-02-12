@@ -13,7 +13,10 @@ export interface Product {
   size?: string[];
   gender?: string;
   isEssential?: boolean;
+  isHighlight?: boolean;
   offerPercentage?: number;
+  season?: string;
+  festival?: string;
   createdAt?: string;
 }
 
@@ -259,17 +262,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     initializeData();
 
-    // Set up polling interval as fallback (only when Supabase is disconnected)
-    const pollingInterval = setInterval(async () => {
-      if (mounted) {
-        await fetchProductsFromSupabase();
-        await fetchUsersFromSupabase();
-      }
-    }, 5000);
+    // No polling - only fetch on mount and real-time updates
+    // Polling was causing excessive API calls
 
     return () => {
       mounted = false;
-      clearInterval(pollingInterval);
       if (productSubscription) {
         try {
           productSubscription.unsubscribe();
@@ -281,206 +278,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [supabaseConnected]);
 
   const fetchProductsFromSupabase = async () => {
-    // Mock products for fallback when Supabase is not connected
-    const mockProducts: Product[] = [
-      {
-        id: '1',
-        name: 'Tailored Wool Blazer',
-        price: 495,
-        image: 'https://images.unsplash.com/photo-1593642532400-2682a8a6b289?w=400&h=500&fit=crop',
-        fabric: 'Wool',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 15
-      },
-      {
-        id: '2',
-        name: 'Silk Evening Dress',
-        price: 675,
-        image: 'https://images.unsplash.com/photo-1595777707802-08422fc4a3e6?w=400&h=500&fit=crop',
-        fabric: 'Silk',
-        fit: 'Slim Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 10
-      },
-      {
-        id: '3',
-        name: 'Cashmere Roll Neck',
-        price: 385,
-        image: 'https://images.unsplash.com/photo-1591047990375-cd5d08cfd58a?w=400&h=500&fit=crop',
-        fabric: 'Cashmere',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 0
-      },
-      {
-        id: '4',
-        name: 'Cotton Oxford Shirt',
-        price: 145,
-        image: 'https://images.unsplash.com/photo-1596362051609-b370a1c159a7?w=400&h=500&fit=crop',
-        fabric: 'Cotton',
-        fit: 'Slim Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: true,
-        offerPercentage: 20
-      },
-      {
-        id: '5',
-        name: 'Wool Dress Trousers',
-        price: 225,
-        image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=500&fit=crop',
-        fabric: 'Wool',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 12
-      },
-      {
-        id: '6',
-        name: 'Cashmere Overcoat',
-        price: 895,
-        image: 'https://images.unsplash.com/photo-1539533057592-4c691c1270f0?w=400&h=500&fit=crop',
-        fabric: 'Cashmere',
-        fit: 'Regular Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 0
-      },
-      {
-        id: '7',
-        name: 'Linen Summer Shirt',
-        price: 99,
-        image: 'https://images.unsplash.com/photo-1597622424447-d3935a1f0d44?w=400&h=500&fit=crop',
-        fabric: 'Linen',
-        fit: 'Relaxed Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: true,
-        offerPercentage: 25
-      },
-      {
-        id: '8',
-        name: 'Silk Blouse',
-        price: 189,
-        image: 'https://images.unsplash.com/photo-1595348625778-3f52b86b7f2e?w=400&h=500&fit=crop',
-        fabric: 'Silk',
-        fit: 'Slim Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 18
-      }
-    ];
-
-  const fetchProductsFromSupabase = async () => {
-    // Mock products for fallback when Supabase is not connected
-    const mockProducts: Product[] = [
-      {
-        id: '1',
-        name: 'Tailored Wool Blazer',
-        price: 495,
-        image: 'https://images.unsplash.com/photo-1593642532400-2682a8a6b289?w=400&h=500&fit=crop',
-        fabric: 'Wool',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 15
-      },
-      {
-        id: '2',
-        name: 'Silk Evening Dress',
-        price: 675,
-        image: 'https://images.unsplash.com/photo-1595777707802-08422fc4a3e6?w=400&h=500&fit=crop',
-        fabric: 'Silk',
-        fit: 'Slim Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 10
-      },
-      {
-        id: '3',
-        name: 'Cashmere Roll Neck',
-        price: 385,
-        image: 'https://images.unsplash.com/photo-1591047990375-cd5d08cfd58a?w=400&h=500&fit=crop',
-        fabric: 'Cashmere',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 0
-      },
-      {
-        id: '4',
-        name: 'Cotton Oxford Shirt',
-        price: 145,
-        image: 'https://images.unsplash.com/photo-1596362051609-b370a1c159a7?w=400&h=500&fit=crop',
-        fabric: 'Cotton',
-        fit: 'Slim Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: true,
-        offerPercentage: 20
-      },
-      {
-        id: '5',
-        name: 'Wool Dress Trousers',
-        price: 225,
-        image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=500&fit=crop',
-        fabric: 'Wool',
-        fit: 'Regular Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: false,
-        offerPercentage: 12
-      },
-      {
-        id: '6',
-        name: 'Cashmere Overcoat',
-        price: 895,
-        image: 'https://images.unsplash.com/photo-1539533057592-4c691c1270f0?w=400&h=500&fit=crop',
-        fabric: 'Cashmere',
-        fit: 'Regular Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 0
-      },
-      {
-        id: '7',
-        name: 'Linen Summer Shirt',
-        price: 99,
-        image: 'https://images.unsplash.com/photo-1597622424447-d3935a1f0d44?w=400&h=500&fit=crop',
-        fabric: 'Linen',
-        fit: 'Relaxed Fit',
-        category: 'Men',
-        gender: 'Male',
-        isEssential: true,
-        offerPercentage: 25
-      },
-      {
-        id: '8',
-        name: 'Silk Blouse',
-        price: 189,
-        image: 'https://images.unsplash.com/photo-1595348625778-3f52b86b7f2e?w=400&h=500&fit=crop',
-        fabric: 'Silk',
-        fit: 'Slim Fit',
-        category: 'Women',
-        gender: 'Female',
-        isEssential: false,
-        offerPercentage: 18
-      }
-    ];
+    // Empty mock products - products will come from Supabase only
+    const mockProducts: Product[] = [];
 
     try {
       // Create an abort controller with 15-second timeout
@@ -490,7 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true)
+        .or('is_active.eq.true,is_active.is.null')
         .order('created_at', { ascending: false });
 
       clearTimeout(timeoutId);
@@ -503,9 +302,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!data || data.length === 0) {
-        console.warn('[Store] No products found in Supabase, using mock products.');
-        setSupabaseConnected(false);
-        setProducts(mockProducts);
+        console.log('[Store] No products found in Supabase database.');
+        setSupabaseConnected(true);
+        setProducts([]);
         return;
       }
 
@@ -525,7 +324,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         size: p.sizes,
         gender: p.gender,
         isEssential: p.is_essential,
+        isHighlight: p.is_highlight,
         offerPercentage: p.offer_percentage,
+        season: p.season,
+        festival: p.festival,
         createdAt: p.created_at
       }));
 
@@ -551,7 +353,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSupabaseConnected(false);
       setProducts(mockProducts);
     }
-  };
   };
 
   const fetchUsersFromSupabase = async () => {
@@ -844,7 +645,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             sizes: product.size || [],
             gender: product.gender,
             is_essential: product.isEssential || false,
+            is_highlight: product.isHighlight || false,
             offer_percentage: product.offerPercentage || 0,
+            season: product.season || null,
+            festival: product.festival || null,
             is_active: true,
             created_at: product.createdAt || new Date().toISOString()
           }
@@ -871,7 +675,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           size: data[0].sizes,
           gender: data[0].gender,
           isEssential: data[0].is_essential,
+          isHighlight: data[0].is_highlight,
           offerPercentage: data[0].offer_percentage,
+          season: data[0].season,
+          festival: data[0].festival,
           createdAt: data[0].created_at,
           id: data[0].id
         };
@@ -913,7 +720,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           sizes: updates.size,
           gender: updates.gender,
           is_essential: updates.isEssential,
+          is_highlight: updates.isHighlight,
           offer_percentage: updates.offerPercentage,
+          season: updates.season,
+          festival: updates.festival,
           created_at: updates.createdAt
         })
         .eq('id', id);
@@ -976,7 +786,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             size: p.sizes,
             gender: p.gender,
             isEssential: p.is_essential,
+            isHighlight: p.is_highlight,
             offerPercentage: p.offer_percentage,
+            festival: p.festival,
             createdAt: p.created_at
           }));
           setProducts(activeProducts);

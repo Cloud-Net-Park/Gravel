@@ -80,7 +80,10 @@ CREATE TABLE IF NOT EXISTS products (
   sizes TEXT[] DEFAULT ARRAY[]::TEXT[],
   sku TEXT UNIQUE,
   gender TEXT,
+  season TEXT,
+  festival TEXT,
   is_essential BOOLEAN DEFAULT FALSE,
+  is_highlight BOOLEAN DEFAULT FALSE,
   offer_percentage DECIMAL(5, 2) DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -289,10 +292,31 @@ CREATE POLICY "Users can delete own addresses"
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Products - all authenticated users can read
-CREATE POLICY "Anyone can read products"
+-- Products - public read access and full CRUD for admins/testing
+DROP POLICY IF EXISTS "Anyone can read products" ON products;
+DROP POLICY IF EXISTS "Allow public read access to products" ON products;
+DROP POLICY IF EXISTS "Allow insert products" ON products;
+DROP POLICY IF EXISTS "Allow update products" ON products;
+DROP POLICY IF EXISTS "Allow delete products" ON products;
+
+CREATE POLICY "Allow public read access to products"
   ON products
   FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow insert products"
+  ON products
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update products"
+  ON products
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Allow delete products"
+  ON products
+  FOR DELETE
   USING (true);
 
 -- Orders - users can only see their own orders
@@ -589,7 +613,10 @@ CREATE TABLE IF NOT EXISTS products (
     sizes TEXT[] DEFAULT ARRAY[]::TEXT[],
     sku TEXT UNIQUE,
     gender TEXT,
+    season TEXT,
+    festival TEXT,
     is_essential BOOLEAN DEFAULT FALSE,
+    is_highlight BOOLEAN DEFAULT FALSE,
     offer_percentage DECIMAL(5, 2) DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

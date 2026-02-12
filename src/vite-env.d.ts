@@ -8,3 +8,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Fallback: declare module for react-dom/client if types are missing
+declare module 'react-dom/client';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { Header } from './components/header';
 import { Footer } from './components/footer';
 import { ProductCard } from './components/product-card';
@@ -24,7 +25,8 @@ function AppContent() {
   });
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [pendingAction, setPendingAction] = useState<'cart' | 'wishlist' | null>(null);
-  const [initialFilter, setInitialFilter] = useState<{ type: string; value: string } | null>(null);
+  const [initialFilter, setInitialFilter] = useState<{ type: string; value: string; gender?: string } | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
 
   // Get first 4 products as featured
   const featuredProducts = products.slice(0, 4);
@@ -116,8 +118,8 @@ function AppContent() {
             setCurrentPage('products');
           }
         }}
-        onFilterNavigation={(filterType, filterValue) => {
-          setInitialFilter({ type: filterType, value: filterValue });
+        onFilterNavigation={(filterType, filterValue, gender) => {
+          setInitialFilter({ type: filterType, value: filterValue, gender });
           setCurrentPage('products');
         }}
       />
@@ -163,11 +165,8 @@ function AppContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {featuredProducts.map((product) => (
-                <div key={product.id} onClick={() => {
-                  setSelectedProduct(product);
-                  setCurrentPage('product');
-                }} className="cursor-pointer">
-                  <ProductCard {...product} />
+                <div key={product.id} className="cursor-pointer">
+                  <ProductCard {...product} onQuickView={() => setQuickViewProduct(product)} />
                 </div>
               ))}
             </div>
@@ -237,10 +236,7 @@ function AppContent() {
 
       {currentPage === 'products' && (
         <ProductListing 
-          onProductClick={(product) => {
-            setSelectedProduct(product);
-            setCurrentPage('product');
-          }}
+          onProductClick={(product) => setQuickViewProduct(product)}
           initialFilter={initialFilter}
           onFilterApplied={() => setInitialFilter(null)}
         />
@@ -248,6 +244,7 @@ function AppContent() {
 
       {currentPage === 'collections' && (
         <CollectionsPage
+          onProductClick={(product) => setQuickViewProduct(product)}
           onShowMore={(category) => {
             setInitialFilter({ type: 'category', value: category });
             setCurrentPage('products');
@@ -293,6 +290,47 @@ function AppContent() {
 
       {currentPage === 'cart' && currentUser && (
         <CartCheckout onContinueShopping={() => setCurrentPage('products')} />
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+          <div className="bg-[var(--cream)] max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 hover:bg-white flex items-center justify-center transition-colors"
+            >
+              <X size={20} className="text-[var(--charcoal)]" />
+            </button>
+            
+            <ProductDetail 
+              product={quickViewProduct}
+              onFitIntelligenceClick={() => {
+                if (!currentUser) {
+                  setQuickViewProduct(null);
+                  setShowLoginPrompt(true);
+                  setPendingAction(null);
+                  return;
+                }
+                setSelectedProduct(quickViewProduct);
+                setQuickViewProduct(null);
+                setCurrentPage('fit');
+              }}
+              onAddToCart={(product, size, quantity) => {
+                if (!currentUser) {
+                  setQuickViewProduct(null);
+                  setShowLoginPrompt(true);
+                  setPendingAction('cart');
+                  return;
+                }
+                addToCart(product, size, quantity);
+                setQuickViewProduct(null);
+                setCurrentPage('cart');
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {showLoginPrompt && (

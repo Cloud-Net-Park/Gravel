@@ -177,7 +177,7 @@ export function UserAuth({ onSuccess }: UserAuthProps) {
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-12">
-          <h1 className="font-[var(--font-serif)] text-4xl text-[var(--charcoal)] mb-2">Grazel</h1>
+          <h1 className="font-[var(--font-serif)] text-4xl text-[var(--charcoal)] mb-2">Grazelapparel</h1>
           <p className="text-gray-600 text-sm tracking-wide">Old Money Luxury Apparel</p>
         </div>
 

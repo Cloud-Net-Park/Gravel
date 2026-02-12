@@ -69,7 +69,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   
   // Form states
   const [productForm, setProductForm] = useState({
-    name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, offerPercentage: ''
+    name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, isHighlight: false, offerPercentage: '', season: '', festival: ''
   });
   const [userForm, setUserForm] = useState({
     name: '', email: '', phone: '', street: '', city: '', postcode: '', country: 'United Kingdom'
@@ -142,7 +142,7 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
   // Product CRUD handlers
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setProductForm({ name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, offerPercentage: '' });
+    setProductForm({ name: '', price: '', image: '', fabric: '', fit: '', category: '', size: '', gender: '', isEssential: false, isHighlight: false, offerPercentage: '', season: '', festival: '' });
     setShowProductModal(true);
   };
 
@@ -158,7 +158,10 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
       size: product.size?.join(', ') || '',
       gender: product.gender || '',
       isEssential: product.isEssential || false,
-      offerPercentage: String(product.offerPercentage || '')
+      isHighlight: product.isHighlight || false,
+      offerPercentage: String(product.offerPercentage || ''),
+      season: product.season || '',
+      festival: product.festival || ''
     });
     setShowProductModal(true);
   };
@@ -174,7 +177,10 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
       size: productForm.size.split(',').map(s => s.trim()).filter(Boolean),
       gender: productForm.gender,
       isEssential: productForm.isEssential,
+      isHighlight: productForm.isHighlight,
       offerPercentage: Number(productForm.offerPercentage) || 0,
+      season: productForm.season,
+      festival: productForm.festival,
       createdAt: editingProduct?.createdAt || new Date().toISOString()
     };
 
@@ -900,6 +906,52 @@ export function AdminDashboard({ onBack }: AdminDashboardProps) {
             <label htmlFor="isEssential" className="text-[14px] text-[var(--charcoal)] cursor-pointer">
               Mark as Essential
             </label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isHighlight"
+              checked={productForm.isHighlight}
+              onChange={(e) => setProductForm({ ...productForm, isHighlight: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="isHighlight" className="text-[14px] text-[var(--charcoal)] cursor-pointer">
+              Show in Highlight (Men & Women Collections)
+            </label>
+          </div>
+          <div>
+            <label className="block text-[14px] text-[var(--charcoal)] mb-2">Season</label>
+            <select
+              value={productForm.season}
+              onChange={(e) => setProductForm({ ...productForm, season: e.target.value })}
+              className="w-full h-10 px-3 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--crimson)]"
+            >
+              <option value="">Select season</option>
+              <option value="Summer">Summer</option>
+              <option value="Winter">Winter</option>
+              <option value="Spring">Spring</option>
+              <option value="Autumn">Autumn</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[14px] text-[var(--charcoal)] mb-2">Festival</label>
+            <select
+              value={productForm.festival}
+              onChange={(e) => setProductForm({ ...productForm, festival: e.target.value })}
+              className="w-full h-10 px-3 border border-gray-200 text-[14px] focus:outline-none focus:border-[var(--crimson)]"
+            >
+              <option value="">Select festival</option>
+              <option value="Diwali">Diwali</option>
+              <option value="Holi">Holi</option>
+              <option value="Eid">Eid</option>
+              <option value="Christmas">Christmas</option>
+              <option value="New Year">New Year</option>
+              <option value="Pongal">Pongal</option>
+              <option value="Onam">Onam</option>
+              <option value="Durga Puja">Durga Puja</option>
+              <option value="Wedding">Wedding</option>
+              <option value="Party">Party</option>
+            </select>
           </div>
           <div>
             <label className="block text-[14px] text-[var(--charcoal)] mb-2">Offer Percentage (%)</label>

@@ -10,7 +10,7 @@ interface HeaderProps {
   onCart?: () => void;
   onProducts?: () => void;
   onNavigation?: (category: string) => void;
-  onFilterNavigation?: (filterType: string, filterValue: string) => void;
+  onFilterNavigation?: (filterType: string, filterValue: string, gender?: string) => void;
 }
 
 export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onNavigation, onFilterNavigation }: HeaderProps) {
@@ -109,7 +109,7 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
           {/* Logo */}
           <div className="flex-shrink-0">
             <a href="/" className="font-[var(--font-serif)] text-[22px] tracking-wide text-[var(--charcoal)]">
-              GRAZEL
+              GRAZEL APPAREL
             </a>
           </div>
 
@@ -130,6 +130,9 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                     } else if (item.label === 'Collections') {
                       // Navigate to collections page
                       onNavigation?.('collections');
+                    } else if (item.label === 'Men' || item.label === 'Women') {
+                      // Filter products by gender
+                      onFilterNavigation?.('gender', item.label);
                     } else {
                       onNavigation?.(item.label);
                     }
@@ -231,7 +234,9 @@ export function Header({ onLogout, onSearch, onWishlist, onCart, onProducts, onN
                             else if (category === 'Occasion') filterType = 'category';
                             else if (category === 'Categories') filterType = 'category';
                             
-                            onFilterNavigation?.(filterType, item);
+                            // Pass the current menu's gender (Men/Women) along with the filter
+                            const currentGender = activeMegaMenu;
+                            onFilterNavigation?.(filterType, item, currentGender === 'Men' || currentGender === 'Women' ? currentGender : undefined);
                             setActiveMegaMenu(null);
                           }}
                           className="text-[14px] text-[var(--charcoal)] hover:text-[var(--crimson)] transition-colors block bg-transparent border-none cursor-pointer text-left"

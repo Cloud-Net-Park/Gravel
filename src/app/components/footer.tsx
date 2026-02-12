@@ -43,7 +43,7 @@ export function Footer() {
       ]
     },
     {
-      title: 'About Grazel',
+      title: 'About Grazelapparel',
       links: [
         { label: 'Our Story', type: 'page', path: '/about' },
         { label: 'Craftsmanship', type: 'page', path: '/craftsmanship' },

@@ -5,19 +5,22 @@ import { useAppStore, Product } from '../store/app-store';
 
 interface ProductListingProps {
   onProductClick: (product: Product) => void;
-  initialFilter?: { type: string; value: string } | null;
+  initialFilter?: { type: string; value: string; gender?: string } | null;
   onFilterApplied?: () => void;
 }
 
 export function ProductListing({ onProductClick, initialFilter, onFilterApplied }: ProductListingProps) {
   const { products } = useAppStore();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [selectedFestivalFilter, setSelectedFestivalFilter] = useState<string>('all');
   const [selectedFilters, setSelectedFilters] = useState<{
     category: string[];
     fabric: string[];
     fit: string[];
     size: string[];
     price: string[];
+    gender: string[];
+    festival: string[];
     essentials: boolean;
     newIn: boolean;
   }>({
@@ -26,6 +29,8 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
     fit: [],
     size: [],
     price: [],
+    gender: [],
+    festival: [],
     essentials: false,
     newIn: false
   });
@@ -44,6 +49,8 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           fit: [],
           size: [],
           price: [],
+          gender: [],
+          festival: [],
           essentials: true,
           newIn: false
         }));
@@ -55,8 +62,23 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           fit: [],
           size: [],
           price: [],
+          gender: [],
+          festival: [],
           essentials: false,
           newIn: true
+        }));
+      } else if (type === 'gender') {
+        setSelectedFilters(prev => ({
+          ...prev,
+          category: [],
+          fabric: [],
+          fit: [],
+          size: [],
+          price: [],
+          gender: [value],
+          festival: [],
+          essentials: false,
+          newIn: false
         }));
       } else {
         // Map the filter value to match our filter options
@@ -65,6 +87,9 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           filterValue = value + ' Fit';
         }
         
+        // Also apply gender filter if provided
+        const genderFilter = initialFilter.gender ? [initialFilter.gender] : [];
+        
         setSelectedFilters(prev => ({
           ...prev,
           category: [],
@@ -72,6 +97,8 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           fit: [],
           size: [],
           price: [],
+          gender: genderFilter,
+          festival: [],
           essentials: false,
           newIn: false,
           [type]: [filterValue]
@@ -83,12 +110,29 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
   }, [initialFilter, onFilterApplied]);
 
   const filters = {
+    gender: ['Men', 'Women', 'Unisex'],
     category: ['Shirts', 'Trousers', 'Knitwear', 'Outerwear', 'Dresses'],
     fabric: ['Cotton', 'Wool', 'Linen', 'Cashmere', 'Silk'],
     fit: ['Slim Fit', 'Regular Fit', 'Relaxed Fit'],
     size: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-    price: ['Under ₹200', '₹200-₹400', '₹400-₹600', 'Over ₹600']
+    price: ['Under ₹200', '₹200-₹400', '₹400-₹600', 'Over ₹600'],
+    festival: ['Diwali', 'Holi', 'Eid', 'Christmas', 'New Year', 'Pongal', 'Onam', 'Durga Puja', 'Wedding', 'Party']
   };
+
+  // Festival options for top filter bar
+  const festivalOptions = [
+    { id: 'all', label: 'All Festivals' },
+    { id: 'Diwali', label: 'Diwali' },
+    { id: 'Holi', label: 'Holi' },
+    { id: 'Eid', label: 'Eid' },
+    { id: 'Christmas', label: 'Christmas' },
+    { id: 'New Year', label: 'New Year' },
+    { id: 'Pongal', label: 'Pongal' },
+    { id: 'Onam', label: 'Onam' },
+    { id: 'Durga Puja', label: 'Durga Puja' },
+    { id: 'Wedding', label: 'Wedding' },
+    { id: 'Party', label: 'Party' }
+  ];
 
   const toggleFilter = (filterType: keyof typeof selectedFilters, value: string) => {
     setSelectedFilters(prev => {
@@ -118,6 +162,8 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
       fit: [],
       size: [],
       price: [],
+      gender: [],
+      festival: [],
       essentials: false,
       newIn: false
     });
@@ -147,6 +193,18 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
     if (selectedFilters.category.length > 0 && (!product.category || !selectedFilters.category.includes(product.category))) {
       return false;
     }
+    // Gender filter - Unisex products show in both Men and Women
+    if (selectedFilters.gender.length > 0) {
+      const productGender = product.gender?.toLowerCase();
+      const isUnisex = productGender === 'unisex';
+      const matchesSelectedGender = selectedFilters.gender.some(g => 
+        productGender === g.toLowerCase()
+      );
+      // Show product if it matches selected gender OR if it's Unisex (and Men or Women is selected)
+      if (!matchesSelectedGender && !isUnisex) {
+        return false;
+      }
+    }
     // Fabric filter
     if (selectedFilters.fabric.length > 0 && !selectedFilters.fabric.includes(product.fabric)) {
       return false;
@@ -169,6 +227,17 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
         return false;
       });
       if (!matchesPrice) return false;
+    }
+    // Festival filter (sidebar checkboxes OR top filter bar)
+    const festivalFilterActive = selectedFilters.festival.length > 0 || selectedFestivalFilter !== 'all';
+    if (festivalFilterActive) {
+      const matchesSidebarFestival = selectedFilters.festival.length === 0 || 
+        (product.festival && selectedFilters.festival.includes(product.festival));
+      const matchesTopFestival = selectedFestivalFilter === 'all' || 
+        product.festival?.toLowerCase() === selectedFestivalFilter.toLowerCase();
+      if (!matchesSidebarFestival || !matchesTopFestival) {
+        return false;
+      }
     }
     return true;
   });
@@ -217,6 +286,27 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
         <p className="text-[14px] text-[var(--light-gray)]">{sortedProducts.length} of {products.length} items</p>
       </div>
 
+      {/* Festival Filter Bar - Only shown on New In page */}
+      {selectedFilters.newIn && (
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2">
+            {festivalOptions.map((festival) => (
+              <button
+                key={festival.id}
+                onClick={() => setSelectedFestivalFilter(festival.id)}
+                className={`px-4 py-2 text-xs tracking-wide border transition-colors ${
+                  selectedFestivalFilter === festival.id
+                    ? 'bg-[var(--charcoal)] text-white border-[var(--charcoal)]'
+                    : 'bg-white text-[var(--charcoal)] border-[var(--border)] hover:border-[var(--charcoal)]'
+                }`}
+              >
+                {festival.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Mobile Filter Button */}
       <div className="lg:hidden mb-6 flex gap-3">
         <button
@@ -250,11 +340,13 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
                 Clear all filters
               </button>
             )}
+            <FilterSection title="Gender" options={filters.gender} filterKey="gender" />
             <FilterSection title="Category" options={filters.category} filterKey="category" />
             <FilterSection title="Fabric" options={filters.fabric} filterKey="fabric" />
             <FilterSection title="Fit" options={filters.fit} filterKey="fit" />
             <FilterSection title="Size" options={filters.size} filterKey="size" />
             <FilterSection title="Price" options={filters.price} filterKey="price" />
+            <FilterSection title="Festival" options={filters.festival} filterKey="festival" />
           </div>
         </aside>
 
@@ -324,8 +416,8 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {sortedProducts.length > 0 ? (
               sortedProducts.map((product) => (
-                <div key={product.id} onClick={() => onProductClick(product)} className="cursor-pointer">
-                  <ProductCard {...product} />
+                <div key={product.id} className="cursor-pointer">
+                  <ProductCard {...product} onQuickView={() => onProductClick(product)} />
                 </div>
               ))
             ) : (
@@ -365,11 +457,13 @@ export function ProductListing({ onProductClick, initialFilter, onFilterApplied 
                     Clear all filters
                   </button>
                 )}
+                <FilterSection title="Gender" options={filters.gender} filterKey="gender" />
                 <FilterSection title="Category" options={filters.category} filterKey="category" />
                 <FilterSection title="Fabric" options={filters.fabric} filterKey="fabric" />
                 <FilterSection title="Fit" options={filters.fit} filterKey="fit" />
                 <FilterSection title="Size" options={filters.size} filterKey="size" />
                 <FilterSection title="Price" options={filters.price} filterKey="price" />
+                <FilterSection title="Festival" options={filters.festival} filterKey="festival" />
               </div>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
